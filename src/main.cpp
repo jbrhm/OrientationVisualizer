@@ -3,22 +3,18 @@
 
 #include <iostream>
 #include <GLFW/glfw3.h>
-#include <webgpu/webgpu.h>
+#include <limits>
+#include <webgpu.hpp>
 
+using namespace wgpu;
 
 int main (int, char**){
-	WGPUInstanceDescriptor desc = {};
-	desc.nextInChain = nullptr;
 
-	//Create te WebGPU instance
-	WGPUInstance instance = wgpuCreateInstance(&desc);
-	std::cout << "Instance: " << instance << std::endl;
+	BufferDescriptor deviceDesc = {};
+	Device device;
+	device.createBuffer(deviceDesc);
 
-	// Get the wgpu adapter
-	//WGPURequestAdapterOptions adapterOpts = {};
-	//WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
-
-	// Destroy the WebGPU instance
-	wgpuInstanceRelease(instance);
+	RenderPipelineDescriptor pipelineDesc;
+	device.createRenderPipeline(pipelineDesc);
 	return 0;
 }

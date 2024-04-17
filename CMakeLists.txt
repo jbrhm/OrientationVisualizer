@@ -41,4 +41,4 @@ add_subdirectory(deps/webgpu_hpp)
 target_link_libraries(App PRIVATE webgpu_cpp webgpu_dawn webgpu_glfw)
 
 # Include deps includes
-target_include_directories(App INTERFACE webgpu_hpp)
+target_include_directories(App INTERFACE webgpuhpp)
