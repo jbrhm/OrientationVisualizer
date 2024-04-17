@@ -2,6 +2,9 @@
 #include <iostream>
 #include <GLFW/glfw3.h>
 
+const uint32_t kWidth = 512;
+const uint32_t kHeight = 512;
+
 int main (int, char**){
 	//Initialize GLFW and make sure it initializes properly
 	if(!glfwInit()){
@@ -9,7 +12,8 @@ int main (int, char**){
 		return EXIT_FAILURE;
 	}
 
-	GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	GLFWwindow* window = glfwCreateWindow(kWidth, kHeight, "Learn WebGPU", nullptr, nullptr);
 
 	if (!window) {
 		std::cerr << "Could not open window!" << std::endl;
@@ -26,7 +30,6 @@ int main (int, char**){
 
 	glfwDestroyWindow(window);
 
-	std::cout << "lol" << std::endl;
 	glfwTerminate();
 	return 0;
 }
