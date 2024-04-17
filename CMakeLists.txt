@@ -35,5 +35,10 @@ set(DAWN_FETCH_DEPENDENCIES ON)
 add_subdirectory("deps/dawn" EXCLUDE_FROM_ALL)
 target_link_libraries(App PRIVATE webgpu_cpp webgpu_dawn webgpu_glfw)
 
+add_subdirectory(deps/webgpu_hpp)
+
 # Link against deps
 target_link_libraries(App PRIVATE webgpu_cpp webgpu_dawn webgpu_glfw)
+
+# Include deps includes
+target_include_directories(App INTERFACE webgpu_hpp)
