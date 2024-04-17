@@ -1,0 +1,16 @@
+---
+- name: Dev YML
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Install Apt Packages
+      become: true
+      apt:
+        name: 
+          - libxkbcommon-dev
+          - libxinerama-dev
+          - libxcursor-dev
+          - libxi-dev
+          - xorg-dev
+        state: latest
+        update_cache: true
