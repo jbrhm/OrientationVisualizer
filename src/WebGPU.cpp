@@ -1,6 +1,8 @@
 // Define the flag that we are using webgpu_hpp
 #define WEBGPU_CPP_IMPLEMENTATION
 
+#include <limits>
+
 // cpp Wrappers
 #include <webgpu.hpp>
 #include "GLFW.cpp" //TODO: Fix LSP to work on header files and cpp files
@@ -35,24 +37,49 @@ shaderDesc.hints = nullptr;
 class WebGPU {
 private:
 
+	// Create GLFW window
+	Window window;
+	void initWindow(){
+		std::cout << "Requesting window..." << std::endl;
+		// This does nothing rn but might be needed later if params are needed
+		window = Window(640, 480, "Learn WebGPU");
+		std::cout << "Got window: " << adapter << std::endl;
+	}
+
 	// WebGPU Instance
 	Instance instance;
 	void initInstance(){
+		std::cout << "Requesting instance..." << std::endl;
 		InstanceDescriptor desc = {};
 		desc.nextInChain = nullptr;
 		instance = createInstance(desc);
+		std::cout << "Got instance: " << adapter << std::endl;
 	}
 
 	// WeebGPU Adapter
 	Adapter adapter;
 	void initAdapter(){
-	
+		std::cout << "Requesting adapter..." << std::endl;
+		RequestAdapterOptions opts = {};
+		adapter = instance.requestAdapter(opts);
+		std::cout << "Got adapter: " << adapter << std::endl;
+
+		// List out the adapter features
+		std::vector<FeatureName> features;
+		size_t featureCount = wgpuAdapterEnumerateFeatures(adapter, nullptr);
+		features.resize(featureCount);
+		adapter.enumerateFeatures(features.data());
+
+		std::cout << "Adapter features:" << std::endl;
+		for (auto f : features) {
+			std::cout << " - " << f << std::endl;
+		}
 	}
 
 	// WebGPU Surface
 	Surface surface;
 	void initSurface(){
-		
+		surface = glfwGetWGPUSurface(instance, window.getWindowPtr());
 	}
 	
 	// WebGPU Device

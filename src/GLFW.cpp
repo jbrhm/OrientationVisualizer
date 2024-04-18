@@ -20,19 +20,14 @@ private:
 	// Name
 	std::string mName;
 
+	void setupWindowSettings(){
+		// Since we are managing the graphics behind the scenes with WebGPU GLFW should not use its graphics api
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	}
+
 public:
-
-	static void pollEvents(){
-		if(refCount){
-			glfwPollEvents();
-		}
-	}
-
-	static bool isGLFWInit(){
-		return isInit;
-	}
-
 	Window(int width, int height, const std::string& name) : mWidth(width), mHeight(height), mName(name){
+		setupWindowSettings();
 		if(!isInit){
 			if (!glfwInit()) {
 				std::cerr << "Could not initialize GLFW!" << std::endl;
@@ -55,6 +50,21 @@ public:
 		if(!refCount){
 			glfwTerminate();
 		}
+	}
+
+	GLFWwindow* getWindowPtr(){
+		return window;
+	}
+
+	// Static functions
+	static void pollEvents(){
+		if(refCount){
+			glfwPollEvents();
+		}
+	}
+
+	static bool isGLFWInit(){
+		return isInit;
 	}
 };
 
