@@ -1,0 +1,154 @@
+// Define the flag that we are using webgpu_hpp
+#define WEBGPU_CPP_IMPLEMENTATION
+
+// cpp Wrappers
+#include <webgpu.hpp>
+#include "GLFW.cpp" //TODO: Fix LSP to work on header files and cpp files
+
+using namespace wgpu;
+
+const char* shaderSource = R"(
+@vertex
+fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
+    var p = vec2f(0.0, 0.0);
+    if (in_vertex_index == 0u) {
+        p = vec2f(-0.5, -0.5);
+    } else if (in_vertex_index == 1u) {
+        p = vec2f(0.5, -0.5);
+    } else {
+        p = vec2f(0.0, 0.5);
+    }
+    return vec4f(p, 0.0, 1.0);
+}
+
+@fragment
+fn fs_main() -> @location(0) vec4f {
+    return vec4f(0.0, 0.4, 1.0, 1.0);
+}
+)";
+
+#ifdef WEBGPU_BACKEND_WGPU
+shaderDesc.hintCount = 0;
+shaderDesc.hints = nullptr;
+#endif
+
+class WebGPU {
+private:
+
+	// WebGPU Instance
+	Instance instance;
+	void initInstance(){
+		InstanceDescriptor desc = {};
+		desc.nextInChain = nullptr;
+		instance = createInstance(desc);
+	}
+
+	// WeebGPU Adapter
+	Adapter adapter;
+	void initAdapter(){
+	
+	}
+
+	// WebGPU Surface
+	Surface surface;
+	void initSurface(){
+
+	}
+	
+	// WebGPU Device
+	Device device;
+	void initDevice(){
+		BufferDescriptor deviceDesc = {};
+		device.createBuffer(deviceDesc);
+	}
+
+	// Rendering Pipeline
+	void initPipeline(){
+		// Create the shader module from WGSL source code
+		ShaderModuleDescriptor shaderDesc;
+		ShaderModuleWGSLDescriptor shaderCodeDesc;
+		// Set the chained struct's header
+		shaderCodeDesc.chain.next = nullptr;
+		shaderCodeDesc.chain.sType = SType::ShaderModuleWGSLDescriptor;
+		// Connect the chain
+		shaderDesc.nextInChain = &shaderCodeDesc.chain;
+		ShaderModule shaderModule = device.createShaderModule(shaderDesc);
+
+		RenderPipelineDescriptor pipelineDesc;
+
+		// Configure the vertex fetch and vertex shader steps in the processing pipeline
+		pipelineDesc.vertex.bufferCount = 0;
+		pipelineDesc.vertex.buffers = nullptr;
+
+		pipelineDesc.vertex.module = shaderModule;
+		pipelineDesc.vertex.entryPoint = "vs_main";
+		pipelineDesc.vertex.constantCount = 0;
+		pipelineDesc.vertex.constants = nullptr;
+
+		// Configure the assembly and rasterization stages
+		// Each sequence of 3 vertices is considered as a triangle
+		pipelineDesc.primitive.topology = PrimitiveTopology::TriangleList;
+
+		// We'll see later how to specify the order in which vertices should be
+		// connected. When not specified, vertices are considered sequentially.
+		pipelineDesc.primitive.stripIndexFormat = IndexFormat::Undefined;
+
+		// The face orientation is defined by assuming that when looking
+		// from the front of the face, its corner vertices are enumerated
+		// in the counter-clockwise (CCW) order.
+		pipelineDesc.primitive.frontFace = FrontFace::CCW;
+
+		// But the face orientation does not matter much because we do not
+		// cull (i.e. "hide") the faces pointing away from us (which is often
+		// used for optimization).
+		pipelineDesc.primitive.cullMode = CullMode::None;
+
+		// Configure the Fragment Shader
+		FragmentState fragmentState;
+		fragmentState.module = shaderModule;
+		fragmentState.entryPoint = "fs_main";
+		fragmentState.constantCount = 0;
+		fragmentState.constants = nullptr;
+		BlendState blendState;
+		blendState.color.srcFactor = BlendFactor::SrcAlpha;
+		blendState.color.dstFactor = BlendFactor::OneMinusSrcAlpha;
+		blendState.color.operation = BlendOperation::Add;
+		blendState.alpha.srcFactor = BlendFactor::Zero;
+		blendState.alpha.dstFactor = BlendFactor::One;
+		blendState.alpha.operation = BlendOperation::Add;
+		ColorTargetState colorTarget;
+		colorTarget.format = WGPUTextureFormat_BGRA8Unorm;
+		colorTarget.blend = &blendState;
+		colorTarget.writeMask = ColorWriteMask::All; // We could write to only some of the color channels.
+
+		// We have only one target because our render pass has only one output color
+		// attachment.
+		fragmentState.targetCount = 1;
+		fragmentState.targets = &colorTarget;
+
+		pipelineDesc.fragment = &fragmentState;
+		pipelineDesc.depthStencil = nullptr;
+		// Samples per pixel
+		pipelineDesc.multisample.count = 1;
+		// Default value for the mask, meaning "all bits on"
+		pipelineDesc.multisample.mask = ~0u;
+		// Default value as well (irrelevant for count = 1 anyways)
+		pipelineDesc.multisample.alphaToCoverageEnabled = false;
+
+		// We do not have any external resources for the pipeline
+		pipelineDesc.layout = nullptr;
+
+		device.createRenderPipeline(pipelineDesc);
+	}
+public:
+	WebGPU(){
+		initInstance();
+
+		initDevice();
+		initPipeline();
+	}
+
+	~WebGPU(){
+	}
+
+};

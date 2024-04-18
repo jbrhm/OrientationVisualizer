@@ -41,6 +41,7 @@
 #include <functional>
 #include <cassert>
 #include <memory>
+#include <limits>
 
 /**
  * A namespace providing a more C++ idiomatic API to WebGPU.
