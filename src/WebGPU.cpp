@@ -52,7 +52,7 @@ private:
 	// WebGPU Surface
 	Surface surface;
 	void initSurface(){
-
+		
 	}
 	
 	// WebGPU Device
