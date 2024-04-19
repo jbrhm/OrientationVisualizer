@@ -1,5 +1,10 @@
 // Define the flag that we are using webgpu_hpp
+#include "GLFW/glfw3.h"
+#include <memory>
 #define WEBGPU_CPP_IMPLEMENTATION
+
+//Tell the back end that we are using the dawn webgpu implementation
+#define WEBGPU_BACKEND_DAWN
 
 #include <limits>
 
@@ -43,7 +48,7 @@ private:
 		std::cout << "Requesting window..." << std::endl;
 		// This does nothing rn but might be needed later if params are needed
 		window = Window(640, 480, "Learn WebGPU");
-		std::cout << "Got window: " << adapter << std::endl;
+		std::cout << "Got window:" << std::endl;
 	}
 
 	// WebGPU Instance
@@ -53,7 +58,7 @@ private:
 		InstanceDescriptor desc = {};
 		desc.nextInChain = nullptr;
 		instance = createInstance(desc);
-		std::cout << "Got instance: " << adapter << std::endl;
+		std::cout << "Got instance: " << std::endl;
 	}
 
 	// WeebGPU Adapter
@@ -64,11 +69,18 @@ private:
 		adapter = instance.requestAdapter(opts);
 		std::cout << "Got adapter: " << adapter << std::endl;
 
-		// List out the adapter features
-		std::vector<FeatureName> features;
+		// TODO: No FeatureName defautl constructor defined
+		std::vector<WGPUFeatureName> features;
+
+		// Call the function a first time with a null return address, just to get
+		// the entry count.
 		size_t featureCount = wgpuAdapterEnumerateFeatures(adapter, nullptr);
+
+		// Allocate memory (could be a new, or a malloc() if this were a C program)
 		features.resize(featureCount);
-		adapter.enumerateFeatures(features.data());
+
+		// Call the function a second time, with a non-null return address
+		wgpuAdapterEnumerateFeatures(adapter, features.data());
 
 		std::cout << "Adapter features:" << std::endl;
 		for (auto f : features) {
@@ -79,15 +91,50 @@ private:
 	// WebGPU Surface
 	Surface surface;
 	void initSurface(){
-		surface = glfwGetWGPUSurface(instance, window.getWindowPtr());
+		glfwInit();
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
+		GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+
+		surface = glfwGetWGPUSurface(instance, window);
 	}
 	
 	// WebGPU Device
 	Device device;
 	void initDevice(){
-		BufferDescriptor deviceDesc = {};
-		device.createBuffer(deviceDesc);
+		std::cout << "Requesting device..." << std::endl;
+
+		DeviceDescriptor deviceDesc = {};
+		deviceDesc.nextInChain = nullptr;
+		deviceDesc.label = "My Device"; // anything works here, that's your call
+		deviceDesc.requiredFeatureCount = 0; // we do not require any specific feature
+		deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
+		deviceDesc.defaultQueue.nextInChain = nullptr;
+		deviceDesc.defaultQueue.label = "The default queue";
+		device = adapter.requestDevice(deviceDesc);
+
+		std::cout << "Got device: " << device << std::endl;
 	}
+
+	// Device Queue
+	Queue queue;
+	void initQueue(){
+		queue = device.getQueue();
+		auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status) {
+			std::cout << "Queued work finished with status: " << status << std::endl;
+		};
+		queue.onSubmittedWorkDone(onQueueWorkDone);
+	}
+
+	// Command Encoder
+	CommandEncoder encoder;
+	void initCommandEncoder(){
+		CommandEncoderDescriptor encoderDesc = {};
+		encoderDesc.nextInChain = nullptr;
+		encoderDesc.label = "My command encoder";
+		encoder = device.createCommandEncoder(encoderDesc);
+	}
+	
+
 
 	// Rendering Pipeline
 	void initPipeline(){
@@ -169,13 +216,27 @@ private:
 	}
 public:
 	WebGPU(){
+		//initWindow();
 		initInstance();
-
+		initAdapter();
+		initSurface();
 		initDevice();
-		initPipeline();
+		initQueue();
+		initCommandEncoder();
 	}
 
 	~WebGPU(){
+	}
+
+	void submitCommand(){
+		CommandBufferDescriptor cmdBufferDescriptor = {};
+		cmdBufferDescriptor.nextInChain = nullptr;
+		cmdBufferDescriptor.label = "Command buffer";
+		CommandBuffer command = encoder.finish(cmdBufferDescriptor);
+
+		// Finally submit the command queue
+		std::cout << "Submitting command..." << std::endl;
+		queue.submit(command);
 	}
 
 };

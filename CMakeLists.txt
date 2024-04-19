@@ -33,16 +33,16 @@ endif()
 # Add Dependencies
 add_subdirectory(deps/glfw-3.4)
 
-add_subdirectory(deps/glfw3webgpu)
-
 set(DAWN_FETCH_DEPENDENCIES ON)
-add_subdirectory("deps/dawn" EXCLUDE_FROM_ALL)
+add_subdirectory("deps/dawn" SYSTEM EXCLUDE_FROM_ALL)
 target_link_libraries(App PRIVATE webgpu_cpp webgpu_dawn webgpu_glfw)
 
 add_subdirectory(deps/webgpu_hpp)
 
+add_subdirectory(deps/glfw3webgpu SYSTEM EXCLUDE_FROM_ALL)
+
 # Link against deps
-target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu webgpu_hpp)
+target_link_libraries(App PRIVATE glfw glfw3webgpu webgpu_hpp)
 
 # Include deps includes
 target_include_directories(App INTERFACE webgpuhpp)

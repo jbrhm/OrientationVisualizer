@@ -26,9 +26,11 @@ private:
 	}
 
 public:
+	Window() = default;
 	Window(int width, int height, const std::string& name) : mWidth(width), mHeight(height), mName(name){
 		setupWindowSettings();
 		if(!isInit){
+			glfwInit();
 			if (!glfwInit()) {
 				std::cerr << "Could not initialize GLFW!" << std::endl;
 				throw std::runtime_error("GLFW didn't initialize properly");
