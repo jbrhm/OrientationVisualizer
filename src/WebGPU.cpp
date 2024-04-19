@@ -43,12 +43,12 @@ class WebGPU {
 private:
 
 	// Create GLFW window
-	Window window;
+	GLFWwindow* window;
 	void initWindow(){
-		std::cout << "Requesting window..." << std::endl;
-		// This does nothing rn but might be needed later if params are needed
-		window = Window(640, 480, "Learn WebGPU");
-		std::cout << "Got window:" << std::endl;
+		// std::cout << "Requesting window..." << std::endl;
+		// // This does nothing rn but might be needed later if params are needed
+		// window = Window(640, 480, "Learn WebGPU");
+		// std::cout << "Got window:" << std::endl;
 	}
 
 	// WebGPU Instance
@@ -91,10 +91,10 @@ private:
 	// WebGPU Surface
 	Surface surface;
 	void initSurface(){
+		//TODO: Remove this creation of the window because it is scuffed
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
-		GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
-
+		window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 		surface = glfwGetWGPUSurface(instance, window);
 	}
 	
@@ -134,7 +134,18 @@ private:
 		encoder = device.createCommandEncoder(encoderDesc);
 	}
 	
-
+	// Create the swap chain
+	SwapChain swapChain;
+	void initSwapChain(){
+		std::cout << "Creating Swapchain: " << std::endl;
+		SwapChainDescriptor swapChainDesc = {};
+		swapChainDesc.nextInChain = nullptr;
+		swapChainDesc.width = 640;
+		swapChainDesc.height = 480;
+		swapChainDesc.format = WGPUTextureFormat_BGRA8Unorm;
+		swapChain = device.createSwapChain(surface, swapChainDesc);
+		std::cout << "Swapchain: " << swapChain << std::endl;
+	}
 
 	// Rendering Pipeline
 	void initPipeline(){
@@ -226,6 +237,7 @@ public:
 	}
 
 	~WebGPU(){
+		glfwDestroyWindow(window);
 	}
 
 	void submitCommand(){
@@ -239,4 +251,12 @@ public:
 		queue.submit(command);
 	}
 
+	bool isWindowClosing(){
+		//TODO: this is scuffed should use the RAII
+		return glfwWindowShouldClose(window);
+	}
+
+	void pollEvents(){
+		Window::pollEvents();
+	}
 };

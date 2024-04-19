@@ -6,5 +6,9 @@ int main (int, char**){
 	WebGPU webgpu;
 	webgpu.submitCommand();
 
+	while(!webgpu.isWindowClosing()){
+		webgpu.pollEvents();
+	}
+
 	return 0;
 }

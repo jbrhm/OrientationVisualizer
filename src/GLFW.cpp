@@ -23,6 +23,7 @@ private:
 	void setupWindowSettings(){
 		// Since we are managing the graphics behind the scenes with WebGPU GLFW should not use its graphics api
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	}
 
 public:
@@ -44,14 +45,21 @@ public:
 		refCount++;
 	}
 
+
+
 	~Window(){
 		// Release the window and update the refcount
-		glfwDestroyWindow(window);
+		//TODO: Fix this destructor
+		//glfwDestroyWindow(window);
 		refCount--;
 
 		if(!refCount){
 			glfwTerminate();
 		}
+	}
+
+	void setWindowPtr(GLFWwindow* ptr){
+		window = ptr;
 	}
 
 	GLFWwindow* getWindowPtr(){
@@ -60,13 +68,19 @@ public:
 
 	// Static functions
 	static void pollEvents(){
-		if(refCount){
-			glfwPollEvents();
-		}
+		glfwPollEvents();
+		// TODO: Fix the ref count
+		// if(refCount){
+		// 	glfwPollEvents();
+		// }
 	}
 
 	static bool isGLFWInit(){
 		return isInit;
+	}
+
+	bool isWindowClosing(){
+		return glfwWindowShouldClose(window);
 	}
 };
 
