@@ -66,6 +66,8 @@ private:
 	void initAdapter(){
 		std::cout << "Requesting adapter..." << std::endl;
 		RequestAdapterOptions opts = {};
+		opts.nextInChain = nullptr;
+		opts.compatibleSurface = surface;
 		adapter = instance.requestAdapter(opts);
 		std::cout << "Got adapter: " << adapter << std::endl;
 
@@ -113,6 +115,13 @@ private:
 		device = adapter.requestDevice(deviceDesc);
 
 		std::cout << "Got device: " << device << std::endl;
+
+		auto onDeviceError = [](WGPUErrorType type, char const* message) {
+		std::cout << "Uncaptured device error: type " << type;
+		if (message) std::cout << " (" << message << ")";
+			std::cout << std::endl;
+		};
+		device.setUncapturedErrorCallback(onDeviceError);
 	}
 
 	// Device Queue
@@ -132,6 +141,8 @@ private:
 		encoderDesc.nextInChain = nullptr;
 		encoderDesc.label = "My command encoder";
 		encoder = device.createCommandEncoder(encoderDesc);
+		encoder.insertDebugMarker("Do one thing");
+		encoder.insertDebugMarker("Do another thing");
 	}
 	
 	// Create the swap chain
@@ -143,8 +154,25 @@ private:
 		swapChainDesc.width = 640;
 		swapChainDesc.height = 480;
 		swapChainDesc.format = WGPUTextureFormat_BGRA8Unorm;
+		swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
+		swapChainDesc.presentMode = WGPUPresentMode_Fifo;
 		swapChain = device.createSwapChain(surface, swapChainDesc);
 		std::cout << "Swapchain: " << swapChain << std::endl;
+	}
+
+	void presentNextTexture(){
+		swapChain.present();
+	}
+
+	// Texture View
+	// No member variable because this is a one time use variable
+	std::shared_ptr<TextureView> getTextureView(){
+		std::shared_ptr<TextureView> textureView = std::make_shared<TextureView>(swapChain.getCurrentTextureView());
+		if (!textureView) {
+			std::cerr << "Cannot acquire next swap chain texture" << std::endl;
+			throw std::runtime_error("Cannot acquire next swap chain texture");
+		}
+		return textureView;
 	}
 
 	// Rendering Pipeline
@@ -229,11 +257,12 @@ public:
 	WebGPU(){
 		//initWindow();
 		initInstance();
-		initAdapter();
 		initSurface();
+		initAdapter();
 		initDevice();
 		initQueue();
 		initCommandEncoder();
+		initSwapChain();
 	}
 
 	~WebGPU(){
@@ -249,6 +278,7 @@ public:
 		// Finally submit the command queue
 		std::cout << "Submitting command..." << std::endl;
 		queue.submit(command);
+		wgpuCommandBufferRelease(command);
 	}
 
 	bool isWindowClosing(){
@@ -258,5 +288,46 @@ public:
 
 	void pollEvents(){
 		Window::pollEvents();
+	}
+
+	void renderColor(){
+		// Get the texture where we will draw our next frame
+		{
+			std::shared_ptr<TextureView> textureView = getTextureView();
+			std::cout << "nextTexture: " << textureView << std::endl;
+			if (!textureView) {
+				std::cerr << "Cannot acquire next swap chain texture" << std::endl;
+				throw std::runtime_error("Cannot acquire next swap chain texture");
+			}
+
+			// Describe how the render pass will be performed
+			RenderPassDescriptor renderPassDesc = {};
+
+			// Attachments are the textures that will be rendered in the next rendering pass
+			RenderPassColorAttachment renderPassColorAttachment = {};
+			renderPassColorAttachment.view = *textureView;
+			renderPassColorAttachment.resolveTarget = nullptr;
+			renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
+			renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
+			renderPassColorAttachment.clearValue = Color{ 0.9, 0.1, 0.2, 1.0 };
+
+
+			renderPassDesc.colorAttachmentCount = 1;
+			// This is a ptr to only one thing right now because we are rendering only one frame
+			renderPassDesc.colorAttachments = &renderPassColorAttachment; 
+			renderPassDesc.depthStencilAttachment = nullptr;
+
+			// These two parameters are used for measuring the time it takes to perform rendering steps 
+			// bc it cant be done on the CPU
+			renderPassDesc.timestampWrites = nullptr;
+
+			renderPassDesc.nextInChain = nullptr;
+
+			RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+			renderPass.end();
+			textureView->release();
+		}
+
+		presentNextTexture();
 	}
 };

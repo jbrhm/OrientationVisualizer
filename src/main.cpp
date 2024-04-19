@@ -8,6 +8,7 @@ int main (int, char**){
 
 	while(!webgpu.isWindowClosing()){
 		webgpu.pollEvents();
+		webgpu.renderColor();
 	}
 
 	return 0;
