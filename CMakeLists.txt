@@ -21,7 +21,7 @@ set_target_properties(App PROPERTIES
 if (MSVC)
 	target_compile_options(App PRIVATE /W4)
 else()
-	target_compile_options(App PRIVATE -Wall -Wextra -pedantic)
+	target_compile_options(App PRIVATE)#-Wall -Wextra -pedantic)
 endif()
 
 if(XCODE)
@@ -36,13 +36,6 @@ add_subdirectory(deps/glfw-3.4)
 set(DAWN_FETCH_DEPENDENCIES ON)
 add_subdirectory("deps/dawn" SYSTEM EXCLUDE_FROM_ALL)
 target_link_libraries(App PRIVATE webgpu_cpp webgpu_dawn webgpu_glfw)
-
-add_subdirectory(deps/webgpu_hpp)
-
-add_subdirectory(deps/glfw3webgpu SYSTEM EXCLUDE_FROM_ALL)
-
-# Link against deps
-target_link_libraries(App PRIVATE glfw glfw3webgpu webgpu_hpp)
 
 # Include deps includes
 target_include_directories(App INTERFACE webgpuhpp)

@@ -1,5 +1,4 @@
 #include <GLFW/glfw3.h>
-#include <glfw3webgpu.h>
 #include <iostream>
 #include <stdexcept>
 #include <string>

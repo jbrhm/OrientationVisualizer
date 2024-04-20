@@ -63,7 +63,7 @@ private:
 		std::cout << "Requesting instance..." << std::endl;
 		InstanceDescriptor desc = {};
 		desc.nextInChain = nullptr;
-		instance = createInstance(desc);
+		instance = CreateInstance(&desc);
 		if (!instance) {
 			throw std::runtime_error("Could not initialize WebGPU!");
 		}
