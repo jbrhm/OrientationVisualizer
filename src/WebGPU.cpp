@@ -1,6 +1,8 @@
 // Define the flag that we are using webgpu_hpp
 #include "GLFW/glfw3.h"
 #include <memory>
+#include <stdexcept>
+#include <webgpu/webgpu_glfw.h>
 #define WEBGPU_CPP_IMPLEMENTATION
 
 //Tell the back end that we are using the dawn webgpu implementation
@@ -9,7 +11,7 @@
 #include <limits>
 
 // cpp Wrappers
-#include <webgpu.hpp>
+// #include <webgpu.hpp>
 #include "GLFW.cpp" //TODO: Fix LSP to work on header files and cpp files
 
 using namespace wgpu;
@@ -45,6 +47,10 @@ private:
 	// Create GLFW window
 	GLFWwindow* window;
 	void initWindow(){
+		//TODO: Remove this creation of the window because it is scuffed
+		glfwInit();
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
+		window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 		// std::cout << "Requesting window..." << std::endl;
 		// // This does nothing rn but might be needed later if params are needed
 		// window = Window(640, 480, "Learn WebGPU");
@@ -58,6 +64,9 @@ private:
 		InstanceDescriptor desc = {};
 		desc.nextInChain = nullptr;
 		instance = createInstance(desc);
+		if (!instance) {
+			throw std::runtime_error("Could not initialize WebGPU!");
+		}
 		std::cout << "Got instance: " << std::endl;
 	}
 
@@ -93,11 +102,8 @@ private:
 	// WebGPU Surface
 	Surface surface;
 	void initSurface(){
-		//TODO: Remove this creation of the window because it is scuffed
-		glfwInit();
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
-		window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
-		surface = glfwGetWGPUSurface(instance, window);
+		surface = glfw::CreateSurfaceForWindow(instance, window);
+		// surface = glfwGetWGPUSurface(instance, window);
 	}
 	
 	// WebGPU Device
@@ -255,7 +261,7 @@ private:
 	}
 public:
 	WebGPU(){
-		//initWindow();
+		initWindow();
 		initInstance();
 		initSurface();
 		initAdapter();
@@ -278,7 +284,6 @@ public:
 		// Finally submit the command queue
 		std::cout << "Submitting command..." << std::endl;
 		queue.submit(command);
-		wgpuCommandBufferRelease(command);
 	}
 
 	bool isWindowClosing(){
