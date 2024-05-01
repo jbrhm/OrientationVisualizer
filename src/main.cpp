@@ -4,12 +4,12 @@
 
 int main (int, char**){
 	WebGPU webgpu;
-	webgpu.submitCommand();
+	// webgpu.submitCommand();
 
-	while(!webgpu.isWindowClosing()){
-		webgpu.pollEvents();
-		webgpu.renderColor();
-	}
+	// while(!webgpu.isWindowClosing()){
+	// 	webgpu.pollEvents();
+	// 	webgpu.renderColor();
+	// }
 
 	return 0;
 }

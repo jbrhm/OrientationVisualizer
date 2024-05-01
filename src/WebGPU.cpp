@@ -3,13 +3,10 @@
 #include <memory>
 #define WEBGPU_CPP_IMPLEMENTATION
 
-//Tell the back end that we are using the dawn webgpu implementation
-#define WEBGPU_BACKEND_DAWN
-
 #include <limits>
 
 // cpp Wrappers
-#include <webgpu.hpp>
+#include <webgpu/webgpu.hpp>
 #include "GLFW.cpp" //TODO: Fix LSP to work on header files and cpp files
 
 using namespace wgpu;
@@ -52,7 +49,7 @@ private:
 	}
 
 	// WebGPU Instance
-	Instance instance;
+	Instance instance = nullptr;
 	void initInstance(){
 		std::cout << "Requesting instance..." << std::endl;
 		InstanceDescriptor desc = {};
@@ -62,7 +59,7 @@ private:
 	}
 
 	// WeebGPU Adapter
-	Adapter adapter;
+	Adapter adapter = nullptr;
 	void initAdapter(){
 		std::cout << "Requesting adapter..." << std::endl;
 		RequestAdapterOptions opts = {};
@@ -91,7 +88,7 @@ private:
 	}
 
 	// WebGPU Surface
-	Surface surface;
+	Surface surface = nullptr;
 	void initSurface(){
 		//TODO: Remove this creation of the window because it is scuffed
 		glfwInit();
@@ -101,14 +98,14 @@ private:
 	}
 	
 	// WebGPU Device
-	Device device;
+	Device device = nullptr;
 	void initDevice(){
 		std::cout << "Requesting device..." << std::endl;
 
 		DeviceDescriptor deviceDesc = {};
 		deviceDesc.nextInChain = nullptr;
 		deviceDesc.label = "My Device"; // anything works here, that's your call
-		deviceDesc.requiredFeatureCount = 0; // we do not require any specific feature
+		deviceDesc.requiredFeaturesCount = 0; // we do not require any specific feature
 		deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
 		deviceDesc.defaultQueue.nextInChain = nullptr;
 		deviceDesc.defaultQueue.label = "The default queue";
@@ -125,17 +122,17 @@ private:
 	}
 
 	// Device Queue
-	Queue queue;
+	Queue queue = nullptr;
 	void initQueue(){
 		queue = device.getQueue();
 		auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status) {
 			std::cout << "Queued work finished with status: " << status << std::endl;
 		};
-		queue.onSubmittedWorkDone(onQueueWorkDone);
+		queue.onSubmittedWorkDone(0, onQueueWorkDone);
 	}
 
 	// Command Encoder
-	CommandEncoder encoder;
+	CommandEncoder encoder = nullptr;
 	void initCommandEncoder(){
 		CommandEncoderDescriptor encoderDesc = {};
 		encoderDesc.nextInChain = nullptr;
@@ -146,7 +143,7 @@ private:
 	}
 	
 	// Create the swap chain
-	SwapChain swapChain;
+	SwapChain swapChain = nullptr;
 	void initSwapChain(){
 		std::cout << "Creating Swapchain: " << std::endl;
 		SwapChainDescriptor swapChainDesc = {};
@@ -176,7 +173,7 @@ private:
 	}
 
 	// Rendering Pipeline
-	void initPipeline(){
+	RenderPipeline initPipeline(){
 		// Create the shader module from WGSL source code
 		ShaderModuleDescriptor shaderDesc;
 		ShaderModuleWGSLDescriptor shaderCodeDesc;
@@ -251,7 +248,7 @@ private:
 		// We do not have any external resources for the pipeline
 		pipelineDesc.layout = nullptr;
 
-		device.createRenderPipeline(pipelineDesc);
+		return device.createRenderPipeline(pipelineDesc);
 	}
 public:
 	WebGPU(){
@@ -259,10 +256,10 @@ public:
 		initInstance();
 		initSurface();
 		initAdapter();
-		initDevice();
-		initQueue();
-		initCommandEncoder();
-		initSwapChain();
+		// initDevice();
+		// initQueue();
+		// initCommandEncoder();
+		// initSwapChain();
 	}
 
 	~WebGPU(){
@@ -309,7 +306,7 @@ public:
 			renderPassColorAttachment.resolveTarget = nullptr;
 			renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
 			renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
-			renderPassColorAttachment.clearValue = Color{ 0.9, 0.1, 0.2, 1.0 };
+			renderPassColorAttachment.clearValue = { 0.9, 0.1, 0.2, 1.0 };
 
 
 			renderPassDesc.colorAttachmentCount = 1;
@@ -323,11 +320,20 @@ public:
 
 			renderPassDesc.nextInChain = nullptr;
 
+			//Execute Commands
+			CommandBuffer buffer = nullptr;
 			RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+			//renderPass.setPipeline(initPipeline());
 			renderPass.end();
-			textureView->release();
-		}
+			renderPass.release();
+			CommandBufferDescriptor cmdDesc = {};
+			buffer = encoder.finish(cmdDesc);
+			encoder.release();
 
-		presentNextTexture();
+			queue.submit(1, &buffer);
+			buffer.release();
+			textureView->release();
+			swapChain.present();
+		}
 	}
 };
