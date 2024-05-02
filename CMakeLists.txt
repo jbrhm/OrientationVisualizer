@@ -5,19 +5,16 @@ project(
 	LANGUAGES CXX C
 )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
-#Include Utilities
-include(utils/utils.cmake)
-set(utils utils/webgpu-utils.h utils/webgpu-utils.cpp)
+include(utils.cmake)
 
-add_subdirectory(deps/glfw)
-add_subdirectory(deps/webgpu)
-add_subdirectory(deps/glfw3webgpu)
+add_subdirectory(glfw)
+add_subdirectory(webgpu)
+add_subdirectory(glfw3webgpu)
 
 add_executable(App
 	main.cpp
-	${utils}
 )
 
 target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu)
