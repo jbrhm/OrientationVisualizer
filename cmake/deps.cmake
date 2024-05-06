@@ -1,0 +1,5 @@
+add_subdirectory(deps/glfw)
+add_subdirectory(deps/webgpu)
+add_subdirectory(deps/glfw3webgpu)
+add_subdirectory(deps/glm)
+add_subdirectory(deps/tiny_obj_loader)
