@@ -5,8 +5,17 @@
 
 #include "Rendering.hpp"
 
+
 int main (int, char**) {
 	Rendering r;
-	r.renderTexture();
+
+	while(!r.shouldWindowClose()){
+		r.render();
+	}
+
 	return 0;
 }
+
+
+
+

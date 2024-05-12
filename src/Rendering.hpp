@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include <glfw3webgpu.h>
 #include <GLFW/glfw3.h>
@@ -18,15 +18,11 @@
 #include <sstream>
 #include <string>
 #include <array>
-#include <memory>
-#include <exception>
 
 constexpr float PI = 3.14159265358979323846f;
 
-class Rendering {
+class Rendering{
 private:
-
-    //VertexAttributes Struct
     struct VertexAttributes {
         glm::vec3 position;
         glm::vec3 normal;
@@ -34,6 +30,7 @@ private:
     };
 
     struct MyUniforms {
+        // We add transform matrices
         glm::mat4x4 projectionMatrix;
         glm::mat4x4 viewMatrix;
         glm::mat4x4 modelMatrix;
@@ -42,51 +39,57 @@ private:
         float _pad[3];
     };
 
-    //Pointers
-	std::unique_ptr<wgpu::Instance> mInstance;
-    std::unique_ptr<GLFWwindow*> mWindow;
-    std::unique_ptr<wgpu::Surface> mSurface;
-    std::unique_ptr<wgpu::Adapter> mAdapter;
-    std::unique_ptr<wgpu::SupportedLimits> mAdapterLimits;
-    std::unique_ptr<wgpu::Device> mDevice;
-    std::unique_ptr<wgpu::Queue> mQueue;
-    std::unique_ptr<wgpu::SwapChain> mSwapChain;
-    std::unique_ptr<wgpu::ShaderModule> mShaderModule;
-    std::unique_ptr<wgpu::PipelineLayout> mLayout;
-    std::unique_ptr<wgpu::RenderPipeline> mRenderPipeline;
-    std::unique_ptr<wgpu::Texture> mTexture;
-    std::unique_ptr<wgpu::TextureView> mTextureView;
-    MyUniforms mUniforms;
-    std::unique_ptr<wgpu::BindGroupLayout> mBindGroupLayout;
-    std::unique_ptr<wgpu::BindGroup> mBindGroup;
+    // WebGPU Objects
+    wgpu::Instance mInstance = nullptr;
+    wgpu::Adapter mAdapter = nullptr;
+    wgpu::Surface mSurface = nullptr;
+    wgpu::SupportedLimits mSupportedLimits;
+    wgpu::Device mDevice = nullptr;
+    wgpu::Queue mQueue = nullptr;
+    wgpu::SwapChain mSwapChain = nullptr;
+    wgpu::ShaderModule mShaderModule = nullptr;
+    wgpu::Texture mDepthTexture = nullptr;
+    wgpu::TextureView mDepthTextureView = nullptr;
+    wgpu::Buffer mVertexBuffer = nullptr;
+    wgpu::Buffer mUniformBuffer = nullptr;
+    wgpu::BindGroupEntry mBinding;
+    wgpu::BindGroup mBindGroup = nullptr;
 
-    wgpu::TextureFormat swapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
-
-    wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
+    //Render Pipelin Objects
+    std::vector<wgpu::VertexAttribute> mVertexAttribs;
+    wgpu::VertexBufferLayout mVertexBufferLayout;
+    wgpu::FragmentState mFragmentState;
+    wgpu::BlendState mBlendState;
+    wgpu::ColorTargetState mColorTarget;
+    wgpu::DepthStencilState mDepthStencilState;
+    wgpu::BindGroupLayoutEntry mBindingLayout;
+    wgpu::BindGroupLayout mBindGroupLayout = nullptr;
+    wgpu::PipelineLayout mPipelinelayout = nullptr;
+    wgpu::RenderPipeline mPipeline = nullptr;
 
     // Mesh Data
-    std::vector<float> pointData;
-	std::vector<uint16_t> indexData;
-    std::vector<VertexAttributes> vertexData;
-    
-    //Vertex Buffer Data
-    std::unique_ptr<wgpu::Buffer> mVertexBuffer;
-    std::unique_ptr<wgpu::Buffer> mUniformBuffer;
-    int indexCount;
+    std::vector<float> mPointData;
+	std::vector<uint16_t> mIndexData;
+	std::vector<VertexAttributes> mVertexData;
+    int mIndexCount;
 
-    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc;
-
-    std::vector<wgpu::VertexAttribute> vertexAttribs;
-
-
-    //Matrix Constants
-    float angle1; // arbitrary time
+    // Uniform Objects
+    MyUniforms mUniforms;
+    float angle1;
     float angle2;
     glm::mat4x4 S;
     glm::mat4x4 T1;
     glm::mat4x4 R1;
 
+    // Const values
+    wgpu::TextureFormat mSwapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
 
+    wgpu::TextureFormat mDepthTextureFormat = wgpu::TextureFormat::Depth24Plus;
+
+    static constexpr int bindGroupLayoutDescEntryCount = 1;
+
+    // GLFW Objects
+    GLFWwindow* mWindow = nullptr;
 
     void initInstance();
 
@@ -102,28 +105,35 @@ private:
 
     void initShaderModule();
 
-    wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
-
-    void initPipeline();
+    void initRenderPipeline();
 
     void initTexture();
 
     void initTextureView();
 
-    bool loadGeometryFromObj(const std::filesystem::path& path, std::vector<VertexAttributes>& vertexData);
+    void loadGeometry();
 
-    void writeVertexDataToGPU();
+    void initVertexBuffer();
+
+    void initUniformBuffer();
 
     void initUniforms();
 
+    void initBinding();
+
     void initBindGroup();
 
+    bool loadGeometryFromObj(const std::filesystem::path& path, std::vector<VertexAttributes>& vertexData);
+
+    wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
+
+
 public:
-    Rendering(/* args */);
+    Rendering();
 
-    void loadGeometry();
+    bool shouldWindowClose();
 
-    void renderTexture();
+    void render();
 
     ~Rendering();
 };
