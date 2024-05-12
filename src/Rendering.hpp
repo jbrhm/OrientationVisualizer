@@ -52,10 +52,11 @@ private:
     std::unique_ptr<wgpu::Queue> mQueue;
     std::unique_ptr<wgpu::SwapChain> mSwapChain;
     std::unique_ptr<wgpu::ShaderModule> mShaderModule;
+    std::unique_ptr<wgpu::PipelineLayout> mLayout;
     std::unique_ptr<wgpu::RenderPipeline> mRenderPipeline;
     std::unique_ptr<wgpu::Texture> mTexture;
     std::unique_ptr<wgpu::TextureView> mTextureView;
-    std::unique_ptr<MyUniforms> mUniforms;
+    MyUniforms mUniforms;
     std::unique_ptr<wgpu::BindGroupLayout> mBindGroupLayout;
     std::unique_ptr<wgpu::BindGroup> mBindGroup;
 
@@ -74,6 +75,9 @@ private:
     int indexCount;
 
     wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc;
+
+    std::vector<wgpu::VertexAttribute> vertexAttribs;
+
 
     //Matrix Constants
     float angle1; // arbitrary time

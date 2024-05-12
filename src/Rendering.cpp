@@ -117,7 +117,7 @@ void Rendering::initPipeline(){
 	wgpu::RenderPipelineDescriptor pipelineDesc;
 
 	// Vertex fetch
-	std::vector<wgpu::VertexAttribute> vertexAttribs(3);
+	vertexAttribs = std::vector<wgpu::VertexAttribute>(3);
 	//                                         ^ This was a 2
 
 	// Position attribute
@@ -207,8 +207,8 @@ void Rendering::initPipeline(){
 	wgpu::PipelineLayoutDescriptor layoutDesc{};
 	layoutDesc.bindGroupLayoutCount = 1;
 	layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&(*mBindGroupLayout);
-	wgpu::PipelineLayout layout = mDevice->createPipelineLayout(layoutDesc);
-	pipelineDesc.layout = layout;
+	mLayout = std::make_unique<wgpu::PipelineLayout>(mDevice->createPipelineLayout(layoutDesc));
+	pipelineDesc.layout = *mLayout;
 
 	mRenderPipeline = std::make_unique<wgpu::RenderPipeline>(mDevice->createRenderPipeline(pipelineDesc));
 	std::cout << "Render pipeline: " << *mRenderPipeline << std::endl;
@@ -271,7 +271,6 @@ void Rendering::writeVertexDataToGPU(){
 
 void Rendering::initUniforms(){
 	// Build transform matrices
-	mUniforms = std::make_unique<MyUniforms>();
 
 	// Translate the view
 	glm::vec3 focalPoint(0.0, 0.0, -1.0);
@@ -283,26 +282,26 @@ void Rendering::initUniforms(){
 	S = glm::scale(glm::mat4x4(1.0), glm::vec3(0.3f));
 	T1 = glm::mat4x4(1.0);
 	R1 = glm::rotate(glm::mat4x4(1.0), angle1, glm::vec3(0.0, 0.0, 1.0));
-	mUniforms->modelMatrix = R1 * T1 * S;
+	mUniforms.modelMatrix = R1 * T1 * S;
 
 	glm::mat4x4 R2 = glm::rotate(glm::mat4x4(1.0), -angle2, glm::vec3(1.0, 0.0, 0.0));
 	glm::mat4x4 T2 = glm::translate(glm::mat4x4(1.0), -focalPoint);
-	mUniforms->viewMatrix = T2 * R2;
+	mUniforms.viewMatrix = T2 * R2;
 	float ratio = 640.0f / 480.0f;
 	float focalLength = 2.0;
 	float near = 0.01f;
 	float far = 100.0f;
 	float divider = 1 / (focalLength * (far - near));
-	mUniforms->projectionMatrix = transpose(glm::mat4x4(
+	mUniforms.projectionMatrix = transpose(glm::mat4x4(
 		1.0, 0.0, 0.0, 0.0,
 		0.0, ratio, 0.0, 0.0,
 		0.0, 0.0, far * divider, -far * near * divider,
 		0.0, 0.0, 1.0 / focalLength, 0.0
 	));
 
-	mUniforms->time = 1.0f;
-	mUniforms->color = { 0.0f, 1.0f, 0.4f, 1.0f };
-	mQueue->writeBuffer(*mUniformBuffer, 0, &(*mUniforms), sizeof(MyUniforms));
+	mUniforms.time = 1.0f;
+	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
+	mQueue->writeBuffer(*mUniformBuffer, 0, &(mUniforms), sizeof(MyUniforms));
 }
 
 void Rendering::initBindGroup(){
@@ -328,17 +327,17 @@ void Rendering::renderTexture(){
 		glfwPollEvents();
 
 		// Update uniform buffer
-		mUniforms->time = static_cast<float>(glfwGetTime()); // glfwGetTime returns a double
+		mUniforms.time = static_cast<float>(glfwGetTime()); // glfwGetTime returns a double
 		// Only update the 1-st float of the buffer
-		mQueue->writeBuffer(*mUniformBuffer, offsetof(MyUniforms, time), &mUniforms->time, sizeof(MyUniforms::time));
+		mQueue->writeBuffer(*mUniformBuffer, offsetof(MyUniforms, time), &mUniforms.time, sizeof(MyUniforms::time));
 
 		// Update view matrix
-		angle1 = mUniforms->time;
+		angle1 = mUniforms.time;
 			std::cout << "l" << std::endl;
 
 		R1 = glm::rotate(glm::mat4x4(1.0), angle1, glm::vec3(0.0, 0.0, 1.0));
-		mUniforms->modelMatrix = R1 * T1 * S;
-		mQueue->writeBuffer(*mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms->modelMatrix, sizeof(MyUniforms::modelMatrix));
+		mUniforms.modelMatrix = R1 * T1 * S;
+		mQueue->writeBuffer(*mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
 
 		wgpu::TextureView nextTexture = mSwapChain->getCurrentTextureView();
 		if (!nextTexture) {
