@@ -88,6 +88,8 @@ private:
 
     static constexpr int bindGroupLayoutDescEntryCount = 1;
 
+    static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
+
     // GLFW Objects
     GLFWwindow* mWindow = nullptr;
 

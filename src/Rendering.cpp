@@ -46,7 +46,7 @@ void Rendering::initDevice(){
 	requiredLimits.limits.maxVertexAttributes = 3;
 	requiredLimits.limits.maxVertexBuffers = 1;
 	// Update max buffer size to allow up to 10000 vertices in the loaded file:
-	requiredLimits.limits.maxBufferSize = 10000 * sizeof(VertexAttributes);
+	requiredLimits.limits.maxBufferSize = MAX_BUFFER_SIZE;
 	requiredLimits.limits.maxVertexBufferArrayStride = sizeof(VertexAttributes);
 	requiredLimits.limits.minStorageBufferOffsetAlignment = mSupportedLimits.limits.minStorageBufferOffsetAlignment;
 	requiredLimits.limits.minUniformBufferOffsetAlignment = mSupportedLimits.limits.minUniformBufferOffsetAlignment;
@@ -230,10 +230,16 @@ void Rendering::initTextureView(){
 }
 
 void Rendering::loadGeometry(){
-	bool success = loadGeometryFromObj(RESOURCE_DIR "/Cube.obj", mVertexData);
+	bool success = loadGeometryFromObj(RESOURCE_DIR "/Globe.obj", mVertexData);
 	if (!success) {
 		std::cerr << "Could not load geometry!" << std::endl;
 		throw std::runtime_error("Could not load geometry!");
+	}
+
+	if(mVertexData.size() * sizeof(decltype(mVertexData[0])) > MAX_BUFFER_SIZE){
+		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexData.size() * sizeof(decltype(mVertexData)) 
+					<< " Is Too Large For Buffer Of Size " << MAX_BUFFER_SIZE << std::endl;
+		throw std::runtime_error("Could not load geometry! Mesh Too Large");
 	}
 }
 
@@ -241,12 +247,19 @@ void Rendering::initVertexBuffer(){
 	// Create vertex buffer
 	BufferDescriptor bufferDesc;
 	bufferDesc.size = mVertexData.size() * sizeof(VertexAttributes); // changed
+	if(mVertexData.size() * sizeof(decltype(mVertexData[0])) > MAX_BUFFER_SIZE){
+		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexData.size() * sizeof(decltype(mVertexData)) 
+					<< " Is Too Large For Buffer Of Size " << MAX_BUFFER_SIZE << std::endl;
+		throw std::runtime_error("Could not load geometry! Mesh Too Large");
+	}
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
 	mVertexBuffer = mDevice.createBuffer(bufferDesc);
 	mQueue.writeBuffer(mVertexBuffer, 0, mVertexData.data(), bufferDesc.size); // changed
 
 	mIndexCount = static_cast<int>(mVertexData.size()); // changed
+
+	
 }
 
 void Rendering::initUniformBuffer(){
