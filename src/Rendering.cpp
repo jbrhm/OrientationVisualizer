@@ -229,42 +229,43 @@ void Rendering::initTextureView(){
 	std::cout << "Depth texture view: " << mDepthTextureView << std::endl;
 }
 
-void Rendering::loadGeometry(){
-	bool success = loadGeometryFromObj(RESOURCE_DIR "/Globe.obj", mVertexData);
+void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
+	mVertexDatas.push_back(std::vector<VertexAttributes>());
+	bool success = loadGeometryFromObj(std::string(RESOURCE_DIR) + url, mVertexDatas[mVertexDatas.size() - 1]);
 	if (!success) {
 		std::cerr << "Could not load geometry!" << std::endl;
 		throw std::runtime_error("Could not load geometry!");
 	}
 
-	if(mVertexData.size() * sizeof(decltype(mVertexData[0])) > MAX_BUFFER_SIZE){
-		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexData.size() * sizeof(decltype(mVertexData)) 
+	if(mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) > MAX_BUFFER_SIZE){
+		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) 
 					<< " Is Too Large For Buffer Of Size " << MAX_BUFFER_SIZE << std::endl;
 		throw std::runtime_error("Could not load geometry! Mesh Too Large");
 	}
+
+	initVertexBuffer();
 }
 
 void Rendering::initVertexBuffer(){
 	// Create vertex buffer
 	BufferDescriptor bufferDesc;
-	bufferDesc.size = mVertexData.size() * sizeof(VertexAttributes); // changed
-	if(mVertexData.size() * sizeof(decltype(mVertexData[0])) > MAX_BUFFER_SIZE){
-		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexData.size() * sizeof(decltype(mVertexData)) 
+	bufferDesc.size = mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(VertexAttributes); // changed
+	if(mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) > MAX_BUFFER_SIZE){
+		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) 
 					<< " Is Too Large For Buffer Of Size " << MAX_BUFFER_SIZE << std::endl;
 		throw std::runtime_error("Could not load geometry! Mesh Too Large");
 	}
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
-	mVertexBuffer = mDevice.createBuffer(bufferDesc);
-	mQueue.writeBuffer(mVertexBuffer, 0, mVertexData.data(), bufferDesc.size); // changed
+	mVertexBuffers.push_back(mDevice.createBuffer(bufferDesc));
+	mQueue.writeBuffer(mVertexBuffers[mVertexBuffers.size() - 1], 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size); // changed
 
-	mIndexCount = static_cast<int>(mVertexData.size()); // changed
-
-	
+	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size())); // changed
 }
 
 void Rendering::initUniformBuffer(){
 	BufferDescriptor bufferDesc;
-	bufferDesc.size = mVertexData.size() * sizeof(VertexAttributes); // changed
+	bufferDesc.size = MAX_BUFFER_SIZE; // changed
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
 	// Create uniform buffer
@@ -390,12 +391,15 @@ void Rendering::render(){
 
 	renderPass.setPipeline(mPipeline);
 
-	renderPass.setVertexBuffer(0, mVertexBuffer, 0, mVertexData.size() * sizeof(VertexAttributes)); // changed
+	for(size_t i = 0; i < mVertexDatas.size(); ++i){
+		renderPass.setVertexBuffer(0, mVertexBuffers[i], 0, mVertexDatas[i].size() * sizeof(VertexAttributes)); // changed
 
-	// Set binding group
-	renderPass.setBindGroup(0, mBindGroup, 0, nullptr);
+		// Set binding group
+		renderPass.setBindGroup(0, mBindGroup, 0, nullptr);
 
-	renderPass.draw(mIndexCount, 1, 0, 0); // changed
+		renderPass.draw(mIndexCounts[i], 1, 0, 0); // changed
+	}
+	
 
 	renderPass.end();
 	renderPass.release();
@@ -440,9 +444,9 @@ Rendering::Rendering(){
 
 	initTextureView();
 
-	loadGeometry();
+	loadGeometry("/Globe.obj");
 
-	initVertexBuffer();
+	loadGeometry("/pyramid.obj");
 
 	initUniformBuffer();
 	
@@ -541,9 +545,11 @@ ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Devi
 }
 
 Rendering::~Rendering(){
-	mVertexBuffer.destroy();
-	mVertexBuffer.release();
-
+	for(auto& buffer : mVertexBuffers){
+		buffer.destroy();
+		buffer.release();
+	}
+	
 	// Destroy the depth texture and its view
 	mDepthTextureView.release();
 	mDepthTexture.destroy();

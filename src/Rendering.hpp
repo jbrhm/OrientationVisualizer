@@ -50,7 +50,7 @@ private:
     wgpu::ShaderModule mShaderModule = nullptr;
     wgpu::Texture mDepthTexture = nullptr;
     wgpu::TextureView mDepthTextureView = nullptr;
-    wgpu::Buffer mVertexBuffer = nullptr;
+    std::vector<wgpu::Buffer> mVertexBuffers;
     wgpu::Buffer mUniformBuffer = nullptr;
     wgpu::BindGroupEntry mBinding;
     wgpu::BindGroup mBindGroup = nullptr;
@@ -68,10 +68,8 @@ private:
     wgpu::RenderPipeline mPipeline = nullptr;
 
     // Mesh Data
-    std::vector<float> mPointData;
-	std::vector<uint16_t> mIndexData;
-	std::vector<VertexAttributes> mVertexData;
-    int mIndexCount;
+	std::vector<std::vector<VertexAttributes>> mVertexDatas;
+    std::vector<int> mIndexCounts;
 
     // Uniform Objects
     MyUniforms mUniforms;
@@ -113,7 +111,7 @@ private:
 
     void initTextureView();
 
-    void loadGeometry();
+    void loadGeometry(const std::string& url);
 
     void initVertexBuffer();
 
