@@ -230,7 +230,7 @@ void Rendering::initTextureView(){
 }
 
 void Rendering::loadGeometry(){
-	bool success = loadGeometryFromObj(RESOURCE_DIR "/pyramid.obj", mVertexData);
+	bool success = loadGeometryFromObj(RESOURCE_DIR "/Cube.obj", mVertexData);
 	if (!success) {
 		std::cerr << "Could not load geometry!" << std::endl;
 		throw std::runtime_error("Could not load geometry!");
