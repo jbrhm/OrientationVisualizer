@@ -538,7 +538,7 @@ Rendering::Rendering(){
 
 	initTextureView();
 
-	//loadGeometry("/Globe.obj");
+	loadGeometry("/Globe.obj");
 
 	loadGeometry("/pyramid.obj");
 
