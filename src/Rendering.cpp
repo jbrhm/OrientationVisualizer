@@ -261,6 +261,12 @@ void Rendering::initVertexBuffer(){
 	mQueue.writeBuffer(mVertexBuffers[mVertexBuffers.size() - 1], 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size); // changed
 
 	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size())); // changed
+
+	for(const auto& v : mVertexDatas){
+		for(const auto& vertex: v){
+			std::cout << "color: " << vertex.color.r << ", " << vertex.color.g << ", " << vertex.color.b << std::endl; 
+		}
+	}
 }
 
 void Rendering::initUniformBuffer(){
