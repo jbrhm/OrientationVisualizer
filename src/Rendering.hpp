@@ -69,6 +69,7 @@ private:
 
     // Mesh Data
 	std::vector<std::vector<VertexAttributes>> mVertexDatas;
+    std::vector<std::vector<VertexAttributes>> mVertexDatas2;
     std::vector<int> mIndexCounts;
 
     // Uniform Objects

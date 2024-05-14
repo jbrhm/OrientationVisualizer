@@ -2,7 +2,7 @@
 # www.blender.org
 mtllib /home/john/Desktop/PersonalProjects/WebGPU/resources/Globe.mtl
 o Sphere
-v 0.000000 0.970989 -0.193081 1.0 0.0 0.0 1.0
+v 0.000000 0.970989 -0.193081
 v 0.000000 0.990581 -0.197100
 v 0.000000 0.914663 -0.378805
 v 0.000000 0.933096 -0.386562

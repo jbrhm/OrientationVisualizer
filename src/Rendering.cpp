@@ -1,4 +1,9 @@
 #include "Rendering.hpp"
+#include <assimp-3.3.1/include/assimp/Importer.hpp>
+#include <assimp-3.3.1/include/assimp/cimport.h>
+#include <assimp-3.3.1/include/assimp/postprocess.h>
+#include <assimp-3.3.1/include/assimp/scene.h>
+#include <assimp-3.3.1/include/assimp/material.h>
 
 using namespace wgpu;
 using glm::mat4x4;
@@ -231,10 +236,93 @@ void Rendering::initTextureView(){
 
 void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 	mVertexDatas.push_back(std::vector<VertexAttributes>());
-	bool success = loadGeometryFromObj(std::string(RESOURCE_DIR) + url, mVertexDatas[mVertexDatas.size() - 1]);
-	if (!success) {
-		std::cerr << "Could not load geometry!" << std::endl;
-		throw std::runtime_error("Could not load geometry!");
+	mVertexDatas2.push_back(std::vector<VertexAttributes>());
+
+	bool success = loadGeometryFromObj(std::string(RESOURCE_DIR) + url, mVertexDatas2[mVertexDatas2.size() - 1]);
+	if(success){
+
+	}
+	Assimp::Importer MeshImporter;
+
+	const aiScene* scene = aiImportFile((std::string(RESOURCE_DIR) + url).c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+
+	if(!scene){
+		std::cerr << "Could not load scene! ASSIMP ERROR: " << aiGetErrorString() << std::endl;
+		throw std::runtime_error("Could not load scene!");
+	}
+
+	//Load all of the meshes
+	for(std::uint32_t meshIdx = 0u; meshIdx < scene->mNumMeshes; ++meshIdx){
+		aiMesh* mesh = scene->mMeshes[meshIdx];
+
+		//Grab the color of the mesh
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+		aiColor4D color;
+		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color);
+
+		std::cout << "color: " << color.r << "," << color.b << ", " << color.g << ", " << color.a << std::endl;
+
+		mVertexDatas[mVertexDatas.size() - 1].resize(mesh->mNumFaces * 3); // 3 vertices for every face
+		// for(std::uint32_t vertIdx = 0u; vertIdx < mesh->mNumVertices; ++vertIdx){
+		// 	//Put the vertices in the format the webgpu/rendering pipelin is looking for
+		// 	aiVector3D vertex = mesh->mVertices[vertIdx];
+		// 	aiVector3D normal = mesh->mNormals[vertIdx];
+
+		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].position = {
+		// 		-vertex.z,
+		// 		vertex.x,
+		// 		vertex.y
+		// 	};
+
+		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].normal = {
+		// 		normal.x,
+		// 		normal.y,
+		// 		normal.z
+		// 	};
+
+		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].color = {
+		// 		color.r,
+		// 		color.g,
+		// 		color.b
+		// 	};
+		// }
+		std::uint32_t index = 0;
+		for(std::uint32_t faceIdx = 0u; faceIdx < mesh->mNumFaces; ++faceIdx){
+			//Put the vertices in the format the webgpu/rendering pipelin is looking for
+			for(int i = 0; i < 3; ++i){
+				std::uint32_t vertIdx = mesh->mFaces[faceIdx].mIndices[i];
+				aiVector3D vertex = mesh->mVertices[vertIdx];
+				aiVector3D normal = mesh->mNormals[vertIdx];
+
+				mVertexDatas[mVertexDatas.size() - 1][index].position = {
+					vertex.x,
+					-vertex.z,
+					vertex.y
+				};
+
+				mVertexDatas[mVertexDatas.size() - 1][index].normal = {
+					normal.x,
+					-normal.z,
+					normal.y
+				};
+
+				mVertexDatas[mVertexDatas.size() - 1][index].color = {
+					color.r,
+					color.g,
+					color.b
+				};
+
+				index++;
+			}			
+		}
+	}
+
+	aiReleaseImport(scene);
+	for(size_t i = 0; i < mVertexDatas[0].size(); i++){
+		auto v = mVertexDatas[0][i];
+		std::cout << v.position.x << " " << v.position.y << " " << v.position.z; 
+		v = mVertexDatas2[0][i];
+		std::cout << " : " << v.position.x << " " << v.position.y << " " << v.position.z << std::endl; 
 	}
 
 	if(mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) > MAX_BUFFER_SIZE){
@@ -450,7 +538,7 @@ Rendering::Rendering(){
 
 	initTextureView();
 
-	loadGeometry("/Globe.obj");
+	//loadGeometry("/Globe.obj");
 
 	loadGeometry("/pyramid.obj");
 
