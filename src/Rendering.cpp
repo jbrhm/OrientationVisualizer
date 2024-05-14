@@ -237,11 +237,6 @@ void Rendering::initTextureView(){
 void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 	mVertexDatas.push_back(std::vector<VertexAttributes>());
 	mVertexDatas2.push_back(std::vector<VertexAttributes>());
-
-	bool success = loadGeometryFromObj(std::string(RESOURCE_DIR) + url, mVertexDatas2[mVertexDatas2.size() - 1]);
-	if(success){
-
-	}
 	Assimp::Importer MeshImporter;
 
 	const aiScene* scene = aiImportFile((std::string(RESOURCE_DIR) + url).c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
@@ -263,29 +258,6 @@ void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 		std::cout << "color: " << color.r << "," << color.b << ", " << color.g << ", " << color.a << std::endl;
 
 		mVertexDatas[mVertexDatas.size() - 1].resize(mesh->mNumFaces * 3); // 3 vertices for every face
-		// for(std::uint32_t vertIdx = 0u; vertIdx < mesh->mNumVertices; ++vertIdx){
-		// 	//Put the vertices in the format the webgpu/rendering pipelin is looking for
-		// 	aiVector3D vertex = mesh->mVertices[vertIdx];
-		// 	aiVector3D normal = mesh->mNormals[vertIdx];
-
-		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].position = {
-		// 		-vertex.z,
-		// 		vertex.x,
-		// 		vertex.y
-		// 	};
-
-		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].normal = {
-		// 		normal.x,
-		// 		normal.y,
-		// 		normal.z
-		// 	};
-
-		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].color = {
-		// 		color.r,
-		// 		color.g,
-		// 		color.b
-		// 	};
-		// }
 		std::uint32_t index = 0;
 		for(std::uint32_t faceIdx = 0u; faceIdx < mesh->mNumFaces; ++faceIdx){
 			//Put the vertices in the format the webgpu/rendering pipelin is looking for
@@ -549,68 +521,6 @@ Rendering::Rendering(){
 	initBinding();
 
 	initBindGroup();
-	
-
-	
-
-	
-}
-
-bool Rendering::loadGeometryFromObj(const std::filesystem::path& path, std::vector<VertexAttributes>& mVertexData) {
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-
-	std::string warn;
-	std::string err;
-
-	// Call the core loading procedure of TinyOBJLoader
-	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.string().c_str());
-
-	// Check errors
-	if (!warn.empty()) {
-		std::cout << warn << std::endl;
-	}
-
-	if (!err.empty()) {
-		std::cerr << err << std::endl;
-	}
-
-	if (!ret) {
-		return false;
-	}
-
-	// Filling in mVertexData:
-	mVertexData.clear();
-	for (const auto& shape : shapes) {
-		size_t offset = mVertexData.size();
-		mVertexData.resize(offset + shape.mesh.indices.size());
-
-		for (size_t i = 0; i < shape.mesh.indices.size(); ++i) {
-			const tinyobj::index_t& idx = shape.mesh.indices[i];
-
-			mVertexData[offset + i].position = {
-				attrib.vertices[3 * idx.vertex_index + 0],
-				-attrib.vertices[3 * idx.vertex_index + 2], // Add a minus to avoid mirroring
-				attrib.vertices[3 * idx.vertex_index + 1]
-			};
-
-			// Also apply the transform to normals!!
-			mVertexData[offset + i].normal = {
-				attrib.normals[3 * idx.normal_index + 0],
-				-attrib.normals[3 * idx.normal_index + 2],
-				attrib.normals[3 * idx.normal_index + 1]
-			};
-
-			mVertexData[offset + i].color = {
-				attrib.colors[3 * idx.vertex_index + 0],
-				attrib.colors[3 * idx.vertex_index + 1],
-				attrib.colors[3 * idx.vertex_index + 2]
-			};
-		}
-	}
-
-	return true;
 }
 
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
