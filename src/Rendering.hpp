@@ -124,8 +124,6 @@ private:
 
     void initBindGroup();
 
-    bool loadGeometryFromObj(const std::filesystem::path& path, std::vector<VertexAttributes>& vertexData);
-
     wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
 
 

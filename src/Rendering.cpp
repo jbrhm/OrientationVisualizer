@@ -238,10 +238,6 @@ void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 	mVertexDatas.push_back(std::vector<VertexAttributes>());
 	mVertexDatas2.push_back(std::vector<VertexAttributes>());
 
-	bool success = loadGeometryFromObj(std::string(RESOURCE_DIR) + url, mVertexDatas2[mVertexDatas2.size() - 1]);
-	if(success){
-
-	}
 	Assimp::Importer MeshImporter;
 
 	const aiScene* scene = aiImportFile((std::string(RESOURCE_DIR) + url).c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
@@ -318,12 +314,6 @@ void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 	}
 
 	aiReleaseImport(scene);
-	for(size_t i = 0; i < mVertexDatas[0].size(); i++){
-		auto v = mVertexDatas[0][i];
-		std::cout << v.position.x << " " << v.position.y << " " << v.position.z; 
-		v = mVertexDatas2[0][i];
-		std::cout << " : " << v.position.x << " " << v.position.y << " " << v.position.z << std::endl; 
-	}
 
 	if(mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) > MAX_BUFFER_SIZE){
 		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) 
@@ -554,63 +544,6 @@ Rendering::Rendering(){
 	
 
 	
-}
-
-bool Rendering::loadGeometryFromObj(const std::filesystem::path& path, std::vector<VertexAttributes>& mVertexData) {
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-
-	std::string warn;
-	std::string err;
-
-	// Call the core loading procedure of TinyOBJLoader
-	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.string().c_str());
-
-	// Check errors
-	if (!warn.empty()) {
-		std::cout << warn << std::endl;
-	}
-
-	if (!err.empty()) {
-		std::cerr << err << std::endl;
-	}
-
-	if (!ret) {
-		return false;
-	}
-
-	// Filling in mVertexData:
-	mVertexData.clear();
-	for (const auto& shape : shapes) {
-		size_t offset = mVertexData.size();
-		mVertexData.resize(offset + shape.mesh.indices.size());
-
-		for (size_t i = 0; i < shape.mesh.indices.size(); ++i) {
-			const tinyobj::index_t& idx = shape.mesh.indices[i];
-
-			mVertexData[offset + i].position = {
-				attrib.vertices[3 * idx.vertex_index + 0],
-				-attrib.vertices[3 * idx.vertex_index + 2], // Add a minus to avoid mirroring
-				attrib.vertices[3 * idx.vertex_index + 1]
-			};
-
-			// Also apply the transform to normals!!
-			mVertexData[offset + i].normal = {
-				attrib.normals[3 * idx.normal_index + 0],
-				-attrib.normals[3 * idx.normal_index + 2],
-				attrib.normals[3 * idx.normal_index + 1]
-			};
-
-			mVertexData[offset + i].color = {
-				attrib.colors[3 * idx.vertex_index + 0],
-				attrib.colors[3 * idx.vertex_index + 1],
-				attrib.colors[3 * idx.vertex_index + 2]
-			};
-		}
-	}
-
-	return true;
 }
 
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
