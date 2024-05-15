@@ -39,6 +39,10 @@ private:
         float _pad[3];
     };
 
+    struct MyRotation {
+        glm::mat4x4 SE4;
+    };
+
     // WebGPU Objects
     wgpu::Instance mInstance = nullptr;
     wgpu::Adapter mAdapter = nullptr;
@@ -52,8 +56,8 @@ private:
     wgpu::TextureView mDepthTextureView = nullptr;
     std::vector<wgpu::Buffer> mVertexBuffers;
     wgpu::Buffer mUniformBuffer = nullptr;
-    wgpu::BindGroupEntry mBinding;
-    wgpu::BindGroup mBindGroup = nullptr;
+
+    wgpu::Buffer mRotationUniform = nullptr;
 
     //Render Pipelin Objects
     std::vector<wgpu::VertexAttribute> mVertexAttribs;
@@ -62,10 +66,21 @@ private:
     wgpu::BlendState mBlendState;
     wgpu::ColorTargetState mColorTarget;
     wgpu::DepthStencilState mDepthStencilState;
-    wgpu::BindGroupLayoutEntry mBindingLayout;
-    wgpu::BindGroupLayout mBindGroupLayout = nullptr;
+    
     wgpu::PipelineLayout mPipelinelayout = nullptr;
     wgpu::RenderPipeline mPipeline = nullptr;
+
+    // Bindings
+    std::vector<wgpu::BindGroupLayout> mBindGroupLayouts;
+    wgpu::BindGroupLayoutEntry mBindingLayout;
+    wgpu::BindGroupLayout mBindGroupLayout = nullptr;
+    wgpu::BindGroupEntry mBinding;
+    wgpu::BindGroup mBindGroup = nullptr;
+
+    wgpu::BindGroupLayoutEntry mRotationBindingLayout;
+    wgpu::BindGroupLayout mRotationBindGroupLayout = nullptr;
+    wgpu::BindGroupEntry mRotationBinding;
+    wgpu::BindGroup mRotationBindGroup = nullptr;
 
     // Mesh Data
 	std::vector<std::vector<VertexAttributes>> mVertexDatas;
@@ -79,6 +94,9 @@ private:
     glm::mat4x4 S;
     glm::mat4x4 T1;
     glm::mat4x4 R1;
+
+    //Rotation Uniform
+    MyRotation uMyRotation;
 
     // Const values
     wgpu::TextureFormat mSwapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
@@ -124,7 +142,7 @@ private:
 
     void initBindGroup();
 
-    bool loadGeometryFromObj(const std::filesystem::path& path, std::vector<VertexAttributes>& vertexData);
+    void initRotationUniform();
 
     wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
 
@@ -135,6 +153,8 @@ public:
     bool shouldWindowClose();
 
     void render();
+
+    void updateRotation(const glm::mat4x4& se4);
 
     ~Rendering();
 };

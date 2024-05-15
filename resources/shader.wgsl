@@ -21,8 +21,13 @@ struct MyUniforms {
     time: f32,
 };
 
+struct MyRotation {
+    SE4: mat4x4f,
+};
+
 // Instead of the simple uTime variable, our uniform variable is a struct
 @group(0) @binding(0) var<uniform> uMyUniforms: MyUniforms;
+@group(1) @binding(0) var<uniform> uMyRotation: MyRotation;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
