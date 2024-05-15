@@ -210,7 +210,7 @@ void Rendering::initRenderPipeline(){
 
 	// Create the pipeline layout
 	mBindGroupLayouts.push_back(mBindGroupLayout);
-	mBindGroupLayouts.push_back(mRotationBindGroupLayout);
+	//mBindGroupLayouts.push_back(mRotationBindGroupLayout);
 	PipelineLayoutDescriptor layoutDesc{};
 	layoutDesc.bindGroupLayoutCount = mBindGroupLayouts.size();
 	layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)mBindGroupLayouts.data();
@@ -369,7 +369,7 @@ void Rendering::initRotationUniform(){
 	bindGroupDesc.layout = mRotationBindGroupLayout;
 	bindGroupDesc.entryCount = bindGroupLayoutDescEntryCount;
 	bindGroupDesc.entries = &mRotationBinding;
-	mBindGroup = mDevice.createBindGroup(bindGroupDesc);
+	mRotationBindGroup = mDevice.createBindGroup(bindGroupDesc);
 }
 
 void Rendering::initUniforms(){
@@ -558,6 +558,8 @@ Rendering::Rendering(){
 	initBinding();
 
 	initBindGroup();
+
+	initRotationUniform();
 }
 
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {

@@ -32,7 +32,7 @@ struct MyRotation {
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
 	var out: VertexOutput;
-	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * vec4f(in.position, 1.0);
+	out.position = uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * vec4f(in.position, 1.0);
 	// Forward the normal
     out.normal = (uMyUniforms.modelMatrix * vec4f(in.normal, 0.0)).xyz;
 	out.color = in.color;
