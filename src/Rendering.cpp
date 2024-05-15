@@ -56,9 +56,9 @@ void Rendering::initDevice(){
 	requiredLimits.limits.minStorageBufferOffsetAlignment = mSupportedLimits.limits.minStorageBufferOffsetAlignment;
 	requiredLimits.limits.minUniformBufferOffsetAlignment = mSupportedLimits.limits.minUniformBufferOffsetAlignment;
 	requiredLimits.limits.maxInterStageShaderComponents = 6;
-	requiredLimits.limits.maxBindGroups = 2;
+	requiredLimits.limits.maxBindGroups = 1;
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
-	requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4 * sizeof(float);
+	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(MyUniforms);
 	requiredLimits.limits.maxTextureDimension1D = 480;
 	requiredLimits.limits.maxTextureDimension2D = 640;
 	requiredLimits.limits.maxTextureArrayLayers = 1;
@@ -194,26 +194,10 @@ void Rendering::initRenderPipeline(){
 	bindGroupLayoutDesc.entries = &mBindingLayout;
 	mBindGroupLayout = mDevice.createBindGroupLayout(bindGroupLayoutDesc);
 
-	// init rotation uniform
-	// Create binding layout (don't forget to = Default)
-	mRotationBindingLayout = Default;
-	mRotationBindingLayout.binding = 0;
-	mRotationBindingLayout.visibility = ShaderStage::Vertex | ShaderStage::Fragment;
-	mRotationBindingLayout.buffer.type = BufferBindingType::Uniform;
-	mRotationBindingLayout.buffer.minBindingSize = sizeof(MyRotation);
-
-	// Create a bind group layout
-	BindGroupLayoutDescriptor bindRotationGroupLayoutDesc{};
-	bindRotationGroupLayoutDesc.entryCount = bindGroupLayoutDescEntryCount;
-	bindRotationGroupLayoutDesc.entries = &mRotationBindingLayout;
-	mRotationBindGroupLayout = mDevice.createBindGroupLayout(bindRotationGroupLayoutDesc);
-
 	// Create the pipeline layout
-	mBindGroupLayouts.push_back(mBindGroupLayout);
-	//mBindGroupLayouts.push_back(mRotationBindGroupLayout);
 	PipelineLayoutDescriptor layoutDesc{};
-	layoutDesc.bindGroupLayoutCount = mBindGroupLayouts.size();
-	layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)mBindGroupLayouts.data();
+	layoutDesc.bindGroupLayoutCount = 1;
+	layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&mBindGroupLayout;
 	mPipelinelayout = mDevice.createPipelineLayout(layoutDesc);
 	pipelineDesc.layout = mPipelinelayout;
 
@@ -253,6 +237,7 @@ void Rendering::initTextureView(){
 void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 	mVertexDatas.push_back(std::vector<VertexAttributes>());
 	mVertexDatas2.push_back(std::vector<VertexAttributes>());
+
 	Assimp::Importer MeshImporter;
 
 	const aiScene* scene = aiImportFile((std::string(RESOURCE_DIR) + url).c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
@@ -274,6 +259,7 @@ void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 		std::cout << "color: " << color.r << "," << color.b << ", " << color.g << ", " << color.a << std::endl;
 
 		mVertexDatas[mVertexDatas.size() - 1].resize(mesh->mNumFaces * 3); // 3 vertices for every face
+
 		std::uint32_t index = 0;
 		for(std::uint32_t faceIdx = 0u; faceIdx < mesh->mNumFaces; ++faceIdx){
 			//Put the vertices in the format the webgpu/rendering pipelin is looking for
@@ -341,35 +327,14 @@ void Rendering::initVertexBuffer(){
 
 void Rendering::initUniformBuffer(){
 	BufferDescriptor bufferDesc;
+	bufferDesc.size = MAX_BUFFER_SIZE; // changed
+	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
+	bufferDesc.mappedAtCreation = false;
 	// Create uniform buffer
 	bufferDesc.size = sizeof(MyUniforms);
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
 	bufferDesc.mappedAtCreation = false;
 	mUniformBuffer = mDevice.createBuffer(bufferDesc);
-}
-
-void Rendering::initRotationUniform(){
-	BufferDescriptor rotationBufferDesc;
-	// Create uniform buffer
-	rotationBufferDesc.size = sizeof(MyRotation);
-	rotationBufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
-	rotationBufferDesc.mappedAtCreation = false;
-	mRotationUniform = mDevice.createBuffer(rotationBufferDesc);
-
-	// Init the Uniform in GPU space
-	glm::mat4x4 identity(1.0);
-	updateRotation(identity);
-
-	mRotationBinding.binding = 0;
-	mRotationBinding.buffer = mRotationUniform;
-	mRotationBinding.offset = 0;
-	mRotationBinding.size = sizeof(MyRotation);
-
-	BindGroupDescriptor bindGroupDesc;
-	bindGroupDesc.layout = mRotationBindGroupLayout;
-	bindGroupDesc.entryCount = bindGroupLayoutDescEntryCount;
-	bindGroupDesc.entries = &mRotationBinding;
-	mRotationBindGroup = mDevice.createBindGroup(bindGroupDesc);
 }
 
 void Rendering::initUniforms(){
@@ -405,6 +370,7 @@ void Rendering::initUniforms(){
 
 	mUniforms.time = 1.0f;
 	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
+	mUniforms.rotation = glm::mat4x4(1.0);
 	mQueue.writeBuffer(mUniformBuffer, 0, &mUniforms, sizeof(MyUniforms));
 }
 
@@ -518,12 +484,6 @@ void Rendering::render(){
 #endif
 }
 
-void Rendering::updateRotation(const glm::mat4x4& se4){
-	uMyRotation.SE4 = se4;
-
-	mQueue.writeBuffer(mRotationUniform, 0, &uMyRotation, sizeof(MyRotation));
-}
-
 Rendering::Rendering(){
     static_assert(sizeof(MyUniforms) % 16 == 0);
 
@@ -558,8 +518,11 @@ Rendering::Rendering(){
 	initBinding();
 
 	initBindGroup();
+	
 
-	initRotationUniform();
+	
+
+	
 }
 
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
@@ -579,6 +542,10 @@ ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Devi
 	shaderCodeDesc.code = shaderSource.c_str();
 	ShaderModuleDescriptor shaderDesc;
 	shaderDesc.nextInChain = &shaderCodeDesc.chain;
+#ifdef WEBGPU_BACKEND_WGPU
+	shaderDesc.hintCount = 0;
+	shaderDesc.hints = nullptr;
+#endif
 
 	return device.createShaderModule(shaderDesc);
 }
