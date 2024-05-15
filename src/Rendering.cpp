@@ -58,7 +58,7 @@ void Rendering::initDevice(){
 	requiredLimits.limits.maxInterStageShaderComponents = 6;
 	requiredLimits.limits.maxBindGroups = 1;
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
-	requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4 * sizeof(float);
+	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(MyUniforms);
 	requiredLimits.limits.maxTextureDimension1D = 480;
 	requiredLimits.limits.maxTextureDimension2D = 640;
 	requiredLimits.limits.maxTextureArrayLayers = 1;
@@ -259,29 +259,7 @@ void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
 		std::cout << "color: " << color.r << "," << color.b << ", " << color.g << ", " << color.a << std::endl;
 
 		mVertexDatas[mVertexDatas.size() - 1].resize(mesh->mNumFaces * 3); // 3 vertices for every face
-		// for(std::uint32_t vertIdx = 0u; vertIdx < mesh->mNumVertices; ++vertIdx){
-		// 	//Put the vertices in the format the webgpu/rendering pipelin is looking for
-		// 	aiVector3D vertex = mesh->mVertices[vertIdx];
-		// 	aiVector3D normal = mesh->mNormals[vertIdx];
 
-		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].position = {
-		// 		-vertex.z,
-		// 		vertex.x,
-		// 		vertex.y
-		// 	};
-
-		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].normal = {
-		// 		normal.x,
-		// 		normal.y,
-		// 		normal.z
-		// 	};
-
-		// 	mVertexDatas[mVertexDatas.size() - 1][offset + vertIdx].color = {
-		// 		color.r,
-		// 		color.g,
-		// 		color.b
-		// 	};
-		// }
 		std::uint32_t index = 0;
 		for(std::uint32_t faceIdx = 0u; faceIdx < mesh->mNumFaces; ++faceIdx){
 			//Put the vertices in the format the webgpu/rendering pipelin is looking for
@@ -392,6 +370,7 @@ void Rendering::initUniforms(){
 
 	mUniforms.time = 1.0f;
 	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
+	mUniforms.rotation = glm::mat4x4(1.0);
 	mQueue.writeBuffer(mUniformBuffer, 0, &mUniforms, sizeof(MyUniforms));
 }
 

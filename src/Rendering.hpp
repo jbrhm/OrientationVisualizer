@@ -34,6 +34,7 @@ private:
         glm::mat4x4 projectionMatrix;
         glm::mat4x4 viewMatrix;
         glm::mat4x4 modelMatrix;
+        glm::mat4x4 rotation;
         std::array<float, 4> color;
         float time;
         float _pad[3];
