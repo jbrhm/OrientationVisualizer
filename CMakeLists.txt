@@ -40,7 +40,7 @@ endif()
 
 target_include_directories(App PRIVATE .)
 
-target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu glm tiny_obj_loader assimp)
+target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu glm assimp)
 
 set_target_properties(App PROPERTIES
 	CXX_STANDARD 17

@@ -9,8 +9,6 @@
 
 #include <webgpu/webgpu.hpp>
 
-#include "tiny_obj_loader/tiny_obj_loader.h"
-
 #include <iostream>
 #include <cassert>
 #include <filesystem>
@@ -20,6 +18,7 @@
 #include <array>
 
 constexpr float PI = 3.14159265358979323846f;
+constexpr int MAX_NUM_UNIFORMS = 2;
 
 class Rendering{
 private:
@@ -70,7 +69,7 @@ private:
 
     // Mesh Data
 	std::vector<std::vector<VertexAttributes>> mVertexDatas;
-    std::vector<std::vector<VertexAttributes>> mVertexDatas2;
+    std::vector<int> mUniformIndices;
     std::vector<int> mIndexCounts;
 
     // Uniform Objects
@@ -80,6 +79,7 @@ private:
     glm::mat4x4 S;
     glm::mat4x4 T1;
     glm::mat4x4 R1;
+    unsigned int mUniformStride;
 
     // Const values
     wgpu::TextureFormat mSwapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
@@ -113,13 +113,13 @@ private:
 
     void initTextureView();
 
-    void loadGeometry(const std::string& url);
+    void loadGeometry(const std::string& url, int uniformID);
 
     void initVertexBuffer();
 
     void initUniformBuffer();
 
-    void initUniforms();
+    void initUniforms(int index, const glm::mat4x4& rotation);
 
     void initBinding();
 

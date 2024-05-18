@@ -62,6 +62,7 @@ void Rendering::initDevice(){
 	requiredLimits.limits.maxTextureDimension1D = 480;
 	requiredLimits.limits.maxTextureDimension2D = 640;
 	requiredLimits.limits.maxTextureArrayLayers = 1;
+	requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 
 	DeviceDescriptor deviceDesc;
 	deviceDesc.label = "My Device";
@@ -187,6 +188,8 @@ void Rendering::initRenderPipeline(){
 	mBindingLayout.visibility = ShaderStage::Vertex | ShaderStage::Fragment;
 	mBindingLayout.buffer.type = BufferBindingType::Uniform;
 	mBindingLayout.buffer.minBindingSize = sizeof(MyUniforms);
+	// Dynamic offsets allow the render pipeline to use different parts of the buffer on different draws 
+	mBindingLayout.buffer.hasDynamicOffset = true;
 
 	// Create a bind group layout
 	BindGroupLayoutDescriptor bindGroupLayoutDesc{};
@@ -234,9 +237,14 @@ void Rendering::initTextureView(){
 	std::cout << "Depth texture view: " << mDepthTextureView << std::endl;
 }
 
-void Rendering::loadGeometry(const std::string& url){//"/Globe.obj"
+void Rendering::loadGeometry(const std::string& url, int uniformID){//"/Globe.obj"
+	if(uniformID > MAX_NUM_UNIFORMS){
+		std::cerr << "Could not load Mesh! UniformID Exceedes Buffer Size" << std::endl;
+		throw std::runtime_error("Could not load Mesh! Mesh Count Has Exceeded Buffer Size");
+	}
+
 	mVertexDatas.push_back(std::vector<VertexAttributes>());
-	mVertexDatas2.push_back(std::vector<VertexAttributes>());
+	mUniformIndices.push_back(uniformID);
 
 	Assimp::Importer MeshImporter;
 
@@ -315,7 +323,7 @@ void Rendering::initVertexBuffer(){
 	bufferDesc.mappedAtCreation = false;
 	mVertexBuffers.push_back(mDevice.createBuffer(bufferDesc));
 	mQueue.writeBuffer(mVertexBuffers[mVertexBuffers.size() - 1], 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size); // changed
-
+ 
 	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size())); // changed
 
 	for(const auto& v : mVertexDatas){
@@ -331,13 +339,14 @@ void Rendering::initUniformBuffer(){
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
 	// Create uniform buffer
-	bufferDesc.size = sizeof(MyUniforms);
+	mUniformStride = std::ceil(static_cast<double>(sizeof(MyUniforms))/mSupportedLimits.limits.minUniformBufferOffsetAlignment) * mSupportedLimits.limits.minUniformBufferOffsetAlignment;
+	bufferDesc.size = (MAX_NUM_UNIFORMS - 1) * mUniformStride + sizeof(MyUniforms);
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
 	bufferDesc.mappedAtCreation = false;
 	mUniformBuffer = mDevice.createBuffer(bufferDesc);
 }
 
-void Rendering::initUniforms(){
+void Rendering::initUniforms(int index, const mat4x4& rotation){
 	// Build transform matrices
 
 	// Translate the view
@@ -370,8 +379,8 @@ void Rendering::initUniforms(){
 
 	mUniforms.time = 1.0f;
 	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
-	mUniforms.rotation = glm::mat4x4(1.0);
-	mQueue.writeBuffer(mUniformBuffer, 0, &mUniforms, sizeof(MyUniforms));
+	mUniforms.rotation = rotation;
+	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(MyUniforms));
 }
 
 void Rendering::initBinding(){
@@ -455,10 +464,12 @@ void Rendering::render(){
 	renderPass.setPipeline(mPipeline);
 
 	for(size_t i = 0; i < mVertexDatas.size(); ++i){
+		uint32_t dynamicOffset = mUniformStride * mUniformIndices[i];
+
 		renderPass.setVertexBuffer(0, mVertexBuffers[i], 0, mVertexDatas[i].size() * sizeof(VertexAttributes)); // changed
 
 		// Set binding group
-		renderPass.setBindGroup(0, mBindGroup, 0, nullptr);
+		renderPass.setBindGroup(0, mBindGroup, 1, &dynamicOffset);
 
 		renderPass.draw(mIndexCounts[i], 1, 0, 0); // changed
 	}
@@ -507,13 +518,21 @@ Rendering::Rendering(){
 
 	initTextureView();
 
-	loadGeometry("/Globe.obj");
+	loadGeometry("/Globe.obj", 0);
 
-	loadGeometry("/pyramid.obj");
+	loadGeometry("/pyramid.obj", 1);
 
 	initUniformBuffer();
 	
-	initUniforms();
+	initUniforms(0, transpose(mat4x4(	1, 0, 0, 0,
+															0,-1, 0, 0,
+															0, 0, -1, 0,
+															0, 0, 0, 1)));
+
+	initUniforms(1, transpose(mat4x4(	 1, 0, 0, 0,
+															0, 1, 0, 0,
+															0, 0, 1, 0,
+															0, 0, 0, 1)));
 	
 	initBinding();
 
