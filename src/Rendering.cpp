@@ -26,7 +26,7 @@ void Rendering::initGLFW(){
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	mWindow = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+	mWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Learn WebGPU", NULL, NULL);
 	if (!mWindow) {
 		std::cerr << "Could not open mWindow!" << std::endl;
 		throw std::runtime_error("Could not open mWindow!");
@@ -59,8 +59,8 @@ void Rendering::initDevice(){
 	requiredLimits.limits.maxBindGroups = 1;
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
 	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(MyUniforms);
-	requiredLimits.limits.maxTextureDimension1D = 480;
-	requiredLimits.limits.maxTextureDimension2D = 640;
+	requiredLimits.limits.maxTextureDimension1D = WINDOW_HEIGHT;
+	requiredLimits.limits.maxTextureDimension2D = WINDOW_WIDTH;
 	requiredLimits.limits.maxTextureArrayLayers = 1;
 	requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 
@@ -88,8 +88,8 @@ void Rendering::initQueue(){
 void Rendering::initSwapChain(){
 	std::cout << "Creating swapchain..." << std::endl;
 	SwapChainDescriptor swapChainDesc;
-	swapChainDesc.width = 640;
-	swapChainDesc.height = 480;
+	swapChainDesc.width = WINDOW_WIDTH;
+	swapChainDesc.height = WINDOW_HEIGHT;
 	swapChainDesc.usage = TextureUsage::RenderAttachment;
 	swapChainDesc.format = mSwapChainFormat;
 	swapChainDesc.presentMode = PresentMode::Mailbox; // Prevents Queue from being overloaded only (keeps one)
@@ -237,7 +237,7 @@ void Rendering::initTexture(){
 	depthTextureDesc.format = mDepthTextureFormat;
 	depthTextureDesc.mipLevelCount = 1;
 	depthTextureDesc.sampleCount = 1;
-	depthTextureDesc.size = {640, 480, 1};
+	depthTextureDesc.size = {WINDOW_WIDTH, WINDOW_HEIGHT, 1};
 	depthTextureDesc.usage = TextureUsage::RenderAttachment;
 	depthTextureDesc.viewFormatCount = 1;
 	depthTextureDesc.viewFormats = (WGPUTextureFormat*)&mDepthTextureFormat;
@@ -386,7 +386,7 @@ void Rendering::initUniforms(int index, const mat4x4& rotation){
 	mat4x4 T2 = glm::translate(mat4x4(1.0), -focalPoint);
 	mUniforms.viewMatrix = T2 * R2;
 
-	float ratio = 640.0f / 480.0f;
+	float ratio = static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT);
 	float focalLength = 2.0;
 	float near = 0.01f;
 	float far = 100.0f;

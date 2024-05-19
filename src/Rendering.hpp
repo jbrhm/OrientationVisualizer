@@ -21,6 +21,10 @@
 constexpr float PI = 3.14159265358979323846f;
 constexpr int MAX_NUM_UNIFORMS = 2;
 
+// Window Dimensions
+constexpr int WINDOW_WIDTH = 1280;
+constexpr int WINDOW_HEIGHT = 720;
+
 class Rendering{
 private:
     struct VertexAttributes {
