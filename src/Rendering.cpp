@@ -278,6 +278,7 @@ void Rendering::loadGeometry(const std::string& url, int uniformID){//"/Globe.ob
 	}
 
 	//Load all of the meshes
+	std::uint32_t index = 0;
 	for(std::uint32_t meshIdx = 0u; meshIdx < scene->mNumMeshes; ++meshIdx){
 		aiMesh* mesh = scene->mMeshes[meshIdx];
 
@@ -287,16 +288,14 @@ void Rendering::loadGeometry(const std::string& url, int uniformID){//"/Globe.ob
 		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color);
 
 		std::cout << "color: " << color.r << "," << color.b << ", " << color.g << ", " << color.a << std::endl;
-
-		mVertexDatas[mVertexDatas.size() - 1].resize(mesh->mNumFaces * 3); // 3 vertices for every face
-
-		std::uint32_t index = 0;
 		for(std::uint32_t faceIdx = 0u; faceIdx < mesh->mNumFaces; ++faceIdx){
 			//Put the vertices in the format the webgpu/rendering pipelin is looking for
 			for(int i = 0; i < 3; ++i){
 				std::uint32_t vertIdx = mesh->mFaces[faceIdx].mIndices[i];
 				aiVector3D vertex = mesh->mVertices[vertIdx];
 				aiVector3D normal = mesh->mNormals[vertIdx];
+
+				mVertexDatas[mVertexDatas.size() - 1].push_back(VertexAttributes());
 
 				mVertexDatas[mVertexDatas.size() - 1][index].position = {
 					vertex.x,
@@ -537,7 +536,7 @@ Rendering::Rendering(){
 
 	loadGeometry("/Globe.obj", 0);
 
-	loadGeometry("/pyramid.obj", 1);
+	loadGeometry("/Coords.obj", 1);
 
 	initUniformBuffer();
 	
