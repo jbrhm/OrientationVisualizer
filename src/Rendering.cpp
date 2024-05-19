@@ -371,7 +371,7 @@ void Rendering::initUniforms(int index, const mat4x4& rotation){
 	// Build transform matrices
 
 	// Translate the view
-	vec3 focalPoint(0.0, 0.0, -1.0);
+	vec3 focalPoint(0.0, 0.0, -2.0);
 	// Rotate the object
 	angle1 = 2.0f; // arbitrary time
 	// Rotate the view point

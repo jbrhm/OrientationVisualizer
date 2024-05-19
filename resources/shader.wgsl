@@ -39,8 +39,10 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let normal = normalize(in.normal);
 
-	let lightColor1 = vec3f(1.0, 0.9, 0.6);
-	let lightColor2 = vec3f(0.6, 0.9, 1.0);
+	let scalar = 1.3;
+
+	let lightColor1 = scalar * vec3f(1.0, 0.9, 0.6);
+	let lightColor2 = scalar * vec3f(0.6, 0.9, 1.0);
 	let lightDirection1 = vec3f(0.5, -0.9, 0.1);
 	let lightDirection2 = vec3f(0.2, 0.4, 0.3);
 	let shading1 = max(0.0, dot(lightDirection1, normal));
