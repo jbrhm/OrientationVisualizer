@@ -4,14 +4,62 @@
 #define TINYOBJLOADER_IMPLEMENTATION // add this to exactly 1 of your C++ files
 
 #include "Rendering.hpp"
+#include <thread>
+#include <mutex>
+#include <iostream>
 
+using namespace std;
 
 int main (int, char**) {
-	Rendering r;
+	constexpr bool isDebug = false;
 
-	while(!r.shouldWindowClose()){
-		r.render();
-	}
+	Rendering r;
+	std::mutex renderingMutex{};
+
+	auto inputFunction = [&](){
+		while(!r.shouldWindowClose()){
+
+			r.getNewInput();
+
+			renderingMutex.lock();
+
+			if constexpr (isDebug){
+				std::cout << "Input Locked" << std::endl;
+			}
+
+			r.writeRotation();
+
+			renderingMutex.unlock();
+
+			if constexpr (isDebug){
+				std::cout << "Input Unlocked" << std::endl;
+			}
+		}
+	};
+
+	auto renderFunction = [&](){
+		while(!r.shouldWindowClose()){
+			renderingMutex.lock();
+
+			if constexpr (isDebug){
+				std::cout << "Render Locked" << std::endl;
+			}
+
+			r.render();
+
+			renderingMutex.unlock();
+
+			if constexpr (isDebug){
+				std::cout << "Render Unlocked" << std::endl;
+			}
+		}
+	};
+
+	std::thread renderingThread(renderFunction);
+	std::thread inputThread(inputFunction);
+
+	renderingThread.join();
+	inputThread.join();
 
 	return 0;
 }

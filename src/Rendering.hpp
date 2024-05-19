@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <array>
+#include <mutex>
 
 constexpr float PI = 3.14159265358979323846f;
 constexpr int MAX_NUM_UNIFORMS = 2;
@@ -80,6 +81,7 @@ private:
     glm::mat4x4 T1;
     glm::mat4x4 R1;
     unsigned int mUniformStride;
+    glm::mat4x4 SE3;
 
     // Const values
     wgpu::TextureFormat mSwapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
@@ -127,13 +129,16 @@ private:
 
     wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
 
-
 public:
     Rendering();
 
     bool shouldWindowClose();
 
     void render();
+
+    void getNewInput();
+
+    void writeRotation();
 
     ~Rendering();
 };

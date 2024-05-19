@@ -92,7 +92,7 @@ void Rendering::initSwapChain(){
 	swapChainDesc.height = 480;
 	swapChainDesc.usage = TextureUsage::RenderAttachment;
 	swapChainDesc.format = mSwapChainFormat;
-	swapChainDesc.presentMode = PresentMode::Fifo;
+	swapChainDesc.presentMode = PresentMode::Mailbox; // Prevents Queue from being overloaded only (keeps one)
 	mSwapChain = mDevice.createSwapChain(mSurface, swapChainDesc);
 	std::cout << "Swapchain: " << mSwapChain << std::endl;
 }
@@ -206,6 +206,28 @@ void Rendering::initRenderPipeline(){
 
 	mPipeline = mDevice.createRenderPipeline(pipelineDesc);
 	std::cout << "Render pipeline: " << mPipeline << std::endl;
+}
+
+void Rendering::getNewInput(){
+	double q0 = 0;
+	double q1 = 0;
+	double q2 = 0;
+	double q3 = 0;
+	std::cin >> q0;
+	std::cin >> q1;
+	std::cin >> q2;
+	std::cin >> q3;
+
+	std::cout << "The Quaternion you entered was: " << q0 << " " << q1 << " " << q2 << " " << q3 << std::endl;
+
+	SE3 = transpose(mat4x4(       2 * (std::pow(q0, 2) + std::pow(q1, 2)) - 1, 2 * (q1 * q2 - q0 * q3), 2 * (q1 * q3 + q0 * q2), 0,
+									 2 * (q1 * q2 + q0 * q3), 2 * (std::pow(q0, 2) + std::pow(q2, 2)) - 1, 2 * (q2 * q3 - q0 * q1), 0,
+									 2 * (q1 * q3 - q0 * q2), 2 * (q2 *q3 + q0 *q1), 2 * (std::pow(q0, 2) + std::pow(q3, 2)) - 1, 0,
+									 0, 0, 0, 1));
+}
+
+void Rendering::writeRotation(){
+	mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, rotation), &SE3, sizeof(MyUniforms::rotation));
 }
 
 void Rendering::initTexture(){
@@ -446,13 +468,8 @@ void Rendering::render(){
 	depthStencilAttachment.depthStoreOp = StoreOp::Store;
 	depthStencilAttachment.depthReadOnly = false;
 	depthStencilAttachment.stencilClearValue = 0;
-#ifdef WEBGPU_BACKEND_WGPU
 	depthStencilAttachment.stencilLoadOp = LoadOp::Clear;
 	depthStencilAttachment.stencilStoreOp = StoreOp::Store;
-#else
-	depthStencilAttachment.stencilLoadOp = LoadOp::Undefined;
-	depthStencilAttachment.stencilStoreOp = StoreOp::Undefined;
-#endif
 	depthStencilAttachment.stencilReadOnly = true;
 
 	renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
@@ -492,7 +509,7 @@ void Rendering::render(){
 #ifdef WEBGPU_BACKEND_DAWN
 	// TODO: Figure out why this has to be wrapped in ifdefs bc it is defined :(
 	device.tick();
-#endif
+#endif	
 }
 
 Rendering::Rendering(){
@@ -518,41 +535,25 @@ Rendering::Rendering(){
 
 	initTextureView();
 
-	loadGeometry("/Globe.obj", 1);
+	loadGeometry("/Globe.obj", 0);
 
-	loadGeometry("/pyramid.obj", 0);
+	loadGeometry("/pyramid.obj", 1);
 
 	initUniformBuffer();
-
-	double q1 = 0;
-	double q2 = 0;
-	double q3 = 0;
-	double q4 = 0;
-	std::cin >> q1;
-	std::cin >> q2;
-	std::cin >> q3;
-	std::cin >> q4;
-
-	std::cout << "The Quaternion you entered was: " << q1 << " " << q2 << " " << q3 << " " << q4 << std::endl;
 	
-	initUniforms(0, transpose(mat4x4(	-1, 0, 0, 0,
+	initUniforms(0, transpose(mat4x4(	 1, 0, 0, 0,
 															0,1, 0, 0,
-															0, 0, -1, 0,
+															0, 0, 1, 0,
 															0, 0, 0, 1)));
 
 	initUniforms(1, transpose(mat4x4(	 1, 0, 0, 0,
-															0, 0, 1, 0,
 															0, 1, 0, 0,
+															0, 0, 1, 0,
 															0, 0, 0, 1)));
 	
 	initBinding();
 
 	initBindGroup();
-	
-
-	
-
-	
 }
 
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
