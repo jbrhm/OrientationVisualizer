@@ -213,12 +213,12 @@ void Rendering::getNewInput(){
 	double q1 = 0;
 	double q2 = 0;
 	double q3 = 0;
-	std::cin >> q0;
-	std::cin >> q1;
+	std::cin >> q3; // Not sure why these have to be backwards
 	std::cin >> q2;
-	std::cin >> q3;
+	std::cin >> q1;
+	std::cin >> q0;
 
-	std::cout << "The Quaternion you entered was: " << q0 << " " << q1 << " " << q2 << " " << q3 << std::endl;
+	std::cout << "The Quaternion you entered was: " << q3 << " " << q2 << " " << q1 << " " << q0 << std::endl;
 
 	SE3 = transpose(mat4x4(       2 * (std::pow(q0, 2) + std::pow(q1, 2)) - 1, 2 * (q1 * q2 - q0 * q3), 2 * (q1 * q3 + q0 * q2), 0,
 									 2 * (q1 * q2 + q0 * q3), 2 * (std::pow(q0, 2) + std::pow(q2, 2)) - 1, 2 * (q2 * q3 - q0 * q1), 0,
@@ -227,7 +227,7 @@ void Rendering::getNewInput(){
 }
 
 void Rendering::writeRotation(){
-	mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, rotation), &SE3, sizeof(MyUniforms::rotation));
+	mQueue.writeBuffer(mUniformBuffer, mUniformStride + offsetof(MyUniforms, rotation), &SE3, sizeof(MyUniforms::rotation));
 }
 
 void Rendering::initTexture(){
