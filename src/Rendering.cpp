@@ -518,20 +518,31 @@ Rendering::Rendering(){
 
 	initTextureView();
 
-	loadGeometry("/Globe.obj", 0);
+	loadGeometry("/Globe.obj", 1);
 
-	loadGeometry("/pyramid.obj", 1);
+	loadGeometry("/pyramid.obj", 0);
 
 	initUniformBuffer();
+
+	double q1 = 0;
+	double q2 = 0;
+	double q3 = 0;
+	double q4 = 0;
+	std::cin >> q1;
+	std::cin >> q2;
+	std::cin >> q3;
+	std::cin >> q4;
+
+	std::cout << "The Quaternion you entered was: " << q1 << " " << q2 << " " << q3 << " " << q4 << std::endl;
 	
-	initUniforms(0, transpose(mat4x4(	1, 0, 0, 0,
-															0,-1, 0, 0,
+	initUniforms(0, transpose(mat4x4(	-1, 0, 0, 0,
+															0,1, 0, 0,
 															0, 0, -1, 0,
 															0, 0, 0, 1)));
 
 	initUniforms(1, transpose(mat4x4(	 1, 0, 0, 0,
-															0, 1, 0, 0,
 															0, 0, 1, 0,
+															0, 1, 0, 0,
 															0, 0, 0, 1)));
 	
 	initBinding();
