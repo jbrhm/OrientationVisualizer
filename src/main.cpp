@@ -4,6 +4,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION // add this to exactly 1 of your C++ files
 
 #include "Rendering.hpp"
+#include "Gui.hpp"
+#include "GLFW.hpp"
+
 #include <thread>
 #include <mutex>
 #include <iostream>
@@ -11,7 +14,10 @@
 using namespace std;
 
 int main (int, char**) {
+	GLFW::init();
 	constexpr bool isDebug = false;
+
+	Gui g;
 
 	Rendering r;
 	std::mutex renderingMutex{};
@@ -61,6 +67,8 @@ int main (int, char**) {
 	renderingThread.join();
 	inputThread.join();
 
+	// This function call should be the very last thing inside main()
+	GLFW::unInit();
 	return 0;
 }
 

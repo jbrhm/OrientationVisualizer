@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glfw3webgpu.h>
-#include <GLFW/glfw3.h>
+#include "GLFW.hpp"
 
 
 #include <glm/glm.hpp> // all types inspired from GLSL
@@ -17,6 +17,7 @@
 #include <string>
 #include <array>
 #include <mutex>
+#include <memory>
 
 constexpr float PI = 3.14159265358979323846f;
 constexpr int MAX_NUM_UNIFORMS = 2;
@@ -97,7 +98,7 @@ private:
     static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
 
     // GLFW Objects
-    GLFWwindow* mWindow = nullptr;
+	std::shared_ptr<GLFWwindow*> mWindow = nullptr;
 
     void initInstance();
 

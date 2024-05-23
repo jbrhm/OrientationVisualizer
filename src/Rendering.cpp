@@ -26,7 +26,7 @@ void Rendering::initGLFW(){
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	mWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Learn WebGPU", NULL, NULL);
+	mWindow = GLFW::windowFactory(WINDOW_WIDTH, WINDOW_HEIGHT, "Visualizer");
 	if (!mWindow) {
 		std::cerr << "Could not open mWindow!" << std::endl;
 		throw std::runtime_error("Could not open mWindow!");
@@ -35,7 +35,7 @@ void Rendering::initGLFW(){
 
 void Rendering::initAdapter(){
     std::cout << "Requesting adapter..." << std::endl;
-	mSurface = glfwGetWGPUSurface(mInstance, mWindow);
+	mSurface = glfwGetWGPUSurface(mInstance, *mWindow);
 	RequestAdapterOptions adapterOpts{};
 	adapterOpts.compatibleSurface = mSurface;
 	mAdapter = mInstance.requestAdapter(adapterOpts);
@@ -422,7 +422,7 @@ void Rendering::initBindGroup(){
 }
 
 bool Rendering::shouldWindowClose(){
-	return glfwWindowShouldClose(mWindow);
+	return GLFW::shouldWindowClose(mWindow);
 }
 
 void Rendering::render(){
@@ -598,6 +598,4 @@ Rendering::~Rendering(){
 	mAdapter.release();
 	mInstance.release();
 	mSurface.release();
-	glfwDestroyWindow(mWindow);
-	glfwTerminate();
 }

@@ -23,6 +23,8 @@ add_executable(App
 	${srcs}
 )
 
+message(${srcs})
+
 if(DEV_MODE)
 	# In dev mode, we load resources from the source tree, so that when we
 	# dynamically edit resources (like shaders), these are correctly
