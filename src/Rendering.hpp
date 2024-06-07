@@ -3,7 +3,6 @@
 #include <glfw3webgpu.h>
 #include "GLFW.hpp"
 
-
 #include <glm/glm.hpp> // all types inspired from GLSL
 #include <glm/ext.hpp>
 
@@ -18,6 +17,8 @@
 #include <array>
 #include <mutex>
 #include <memory>
+#include "Gui.hpp"
+
 
 constexpr float PI = 3.14159265358979323846f;
 constexpr int MAX_NUM_UNIFORMS = 2;
@@ -25,6 +26,8 @@ constexpr int MAX_NUM_UNIFORMS = 2;
 // Window Dimensions
 constexpr int WINDOW_WIDTH = 1280;
 constexpr int WINDOW_HEIGHT = 720;
+constexpr int GUI_WINDOW_WIDTH = 1280;
+constexpr int GUI_WINDOW_HEIGHT = 720;
 
 class Rendering{
 private:
@@ -100,6 +103,9 @@ private:
     // GLFW Objects
 	GLFWwindow* mWindow = nullptr;
 
+    // Gui
+    Gui mGui;
+
     void initInstance();
 
     void initGLFW();
@@ -144,6 +150,13 @@ public:
     void getNewInput();
 
     void writeRotation();
+
+    // Info that IMGUI needs to know about the rendering pipeline
+    wgpu::Device& getDevice();
+
+    wgpu::TextureFormat& getDepthTextureFormat();
+
+    wgpu::TextureFormat& getSwapChainFormat();
 
     ~Rendering();
 };

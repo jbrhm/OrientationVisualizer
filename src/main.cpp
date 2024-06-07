@@ -14,55 +14,17 @@ using namespace std;
 
 int main (int, char**) {
 	GLFW::init();
-	constexpr bool isDebug = false;
 
 	Rendering r;
-	std::mutex renderingMutex{};
+	
 
-	auto inputFunction = [&](){
-		while(!r.shouldWindowClose()){
+	while(!r.shouldWindowClose()){
 
-			r.getNewInput();
 
-			renderingMutex.lock();
+		r.render();
 
-			if constexpr (isDebug){
-				std::cout << "Input Locked" << std::endl;
-			}
+	}
 
-			r.writeRotation();
-
-			renderingMutex.unlock();
-
-			if constexpr (isDebug){
-				std::cout << "Input Unlocked" << std::endl;
-			}
-		}
-	};
-
-	auto renderFunction = [&](){
-		while(!r.shouldWindowClose()){
-			renderingMutex.lock();
-
-			if constexpr (isDebug){
-				std::cout << "Render Locked" << std::endl;
-			}
-
-			r.render();
-
-			renderingMutex.unlock();
-
-			if constexpr (isDebug){
-				std::cout << "Render Unlocked" << std::endl;
-			}
-		}
-	};
-
-	std::thread renderingThread(renderFunction);
-	std::thread inputThread(inputFunction);
-
-	renderingThread.join();
-	inputThread.join();
 
 	// This function call should be the very last thing inside main()
 	GLFW::unInit();

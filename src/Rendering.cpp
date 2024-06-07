@@ -48,15 +48,15 @@ void Rendering::initAdapter(){
 void Rendering::initDevice(){
     std::cout << "Requesting device..." << std::endl;
 	RequiredLimits requiredLimits = Default;
-	requiredLimits.limits.maxVertexAttributes = 3;
+	requiredLimits.limits.maxVertexAttributes = 4;
 	requiredLimits.limits.maxVertexBuffers = 1;
 	// Update max buffer size to allow up to 10000 vertices in the loaded file:
 	requiredLimits.limits.maxBufferSize = MAX_BUFFER_SIZE;
 	requiredLimits.limits.maxVertexBufferArrayStride = sizeof(VertexAttributes);
 	requiredLimits.limits.minStorageBufferOffsetAlignment = mSupportedLimits.limits.minStorageBufferOffsetAlignment;
 	requiredLimits.limits.minUniformBufferOffsetAlignment = mSupportedLimits.limits.minUniformBufferOffsetAlignment;
-	requiredLimits.limits.maxInterStageShaderComponents = 6;
-	requiredLimits.limits.maxBindGroups = 1;
+	requiredLimits.limits.maxInterStageShaderComponents = 8;
+	requiredLimits.limits.maxBindGroups = 2;
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
 	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(MyUniforms);
 	requiredLimits.limits.maxTextureDimension1D = WINDOW_HEIGHT;
@@ -478,9 +478,11 @@ void Rendering::render(){
 	RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
 
 	renderPass.setPipeline(mPipeline);
+	mGui.renderGui(renderPass);
 
+	uint32_t dynamicOffset = 0;
 	for(size_t i = 0; i < mVertexDatas.size(); ++i){
-		uint32_t dynamicOffset = mUniformStride * mUniformIndices[i];
+		dynamicOffset = mUniformStride * mUniformIndices[i];
 
 		renderPass.setVertexBuffer(0, mVertexBuffers[i], 0, mVertexDatas[i].size() * sizeof(VertexAttributes)); // changed
 
@@ -553,6 +555,8 @@ Rendering::Rendering(){
 	initBinding();
 
 	initBindGroup();
+
+	mGui = Gui{getDepthTextureFormat(), getSwapChainFormat(), getDevice(), mWindow};
 }
 
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
@@ -578,6 +582,18 @@ ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Devi
 #endif
 
 	return device.createShaderModule(shaderDesc);
+}
+
+wgpu::Device& Rendering::getDevice(){
+	return mDevice;
+}
+
+wgpu::TextureFormat& Rendering::getDepthTextureFormat(){
+	return mDepthTextureFormat;
+}
+
+wgpu::TextureFormat& Rendering::getSwapChainFormat(){
+	return mSwapChainFormat;
 }
 
 Rendering::~Rendering(){
