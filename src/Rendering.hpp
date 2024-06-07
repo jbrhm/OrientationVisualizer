@@ -98,7 +98,7 @@ private:
     static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
 
     // GLFW Objects
-	std::shared_ptr<GLFWwindow*> mWindow = nullptr;
+	GLFWwindow* mWindow = nullptr;
 
     void initInstance();
 

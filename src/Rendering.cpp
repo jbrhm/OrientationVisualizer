@@ -35,7 +35,7 @@ void Rendering::initGLFW(){
 
 void Rendering::initAdapter(){
     std::cout << "Requesting adapter..." << std::endl;
-	mSurface = glfwGetWGPUSurface(mInstance, *mWindow);
+	mSurface = glfwGetWGPUSurface(mInstance, mWindow);
 	RequestAdapterOptions adapterOpts{};
 	adapterOpts.compatibleSurface = mSurface;
 	mAdapter = mInstance.requestAdapter(adapterOpts);
