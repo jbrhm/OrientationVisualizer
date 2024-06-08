@@ -152,6 +152,11 @@ private:
 
 	//IMGUI variables
 	float f = 0;
+	double q0 = 0;
+	double q1 = 0;
+	double q2 = 0;
+	double q3 = 0;
+	
 
 	// CONSTANTS
 	wgpu::Buffer mUniformBuffer = nullptr;

@@ -126,7 +126,7 @@ void Application::onFrame() {
 	// We add the GUI drawing commands to the render pass
 	updateGui(renderPass);
 
-	std::cout << f << std::endl; 
+	std::cout << "Current Quaternion Input: " << q0 << ", " << q1 << ", " << q2 << ", " << q3 << std::endl; 
 
 	renderPass.end();
 	renderPass.release();
@@ -685,6 +685,18 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 
 		ImGuiIO& io = ImGui::GetIO();
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::SetNextItemWidth(100);
+		ImGui::InputScalar("q0", 9, &q0); // Input type 9 is double
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(100);
+		ImGui::InputScalar("q1", 9, &q1); // Input type 9 is double
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(100);
+		ImGui::InputScalar("q2", 9, &q2); // Input type 9 is double
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(100);
+		ImGui::InputScalar("q3", 9, &q3); // Input type 9 is double
+		ImGui::SameLine();
 		ImGui::End();
 	}
 
