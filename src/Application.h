@@ -1,8 +1,9 @@
 #pragma once
 
-#include <webgpu/webgpu.hpp>
-#include <glm/glm.hpp>
 #include <filesystem>
+#include <webgpu/webgpu.hpp>
+#include <glm/glm.hpp> // all types inspired from GLSL
+#include <glm/ext.hpp>
 #include <fstream>
 #include <assimp-3.3.1/include/assimp/Importer.hpp>
 #include <assimp-3.3.1/include/assimp/cimport.h>
@@ -115,8 +116,8 @@ private:
 	GLFWwindow* m_window = nullptr;
 	wgpu::Instance m_instance = nullptr;
 	wgpu::Surface m_surface = nullptr;
-	wgpu::Device m_device = nullptr;
-	wgpu::Queue m_queue = nullptr;
+	wgpu::Device mDevice = nullptr;
+	wgpu::Queue mQueue = nullptr;
 	// Keep the error callback alive
 	std::unique_ptr<wgpu::ErrorCallback> m_errorCallbackHandle;
 
@@ -143,7 +144,6 @@ private:
 
 	// Uniforms
 	wgpu::Buffer m_uniformBuffer = nullptr;
-	MyUniforms m_uniforms;
 
 	// Bind Group
 	wgpu::BindGroup m_bindGroup = nullptr;
@@ -157,9 +157,27 @@ private:
 	std::vector<int> mUniformIndices;
 	wgpu::BindGroupLayoutEntry mBindingLayout;
 	wgpu::BindGroupLayout mBindGroupLayout = nullptr;
+	void initUniforms(int index, const mat4x4& rotation);
+	void initUniformBuffer();
+	MyUniforms mUniforms;
+
+	// Uniform Variables
+	double angle1;
+	double angle2;
+    glm::mat4x4 S;
+	glm::mat4x4 T1;
+	glm::mat4x4 R1;
 
 
 	// CONSTANTS
+	wgpu::Buffer mUniformBuffer = nullptr;
+	size_t mUniformStride;
+	wgpu::SupportedLimits mSupportedLimits;
+
+
+	static constexpr int WINDOW_WIDTH = 1280;
+	static constexpr int WINDOW_HEIGHT = 720;
+
 	static constexpr int MAX_NUM_UNIFORMS = 2;
 
 	static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);

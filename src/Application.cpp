@@ -31,6 +31,12 @@ bool Application::onInit() {
 	if (!initDepthBuffer()) return false;
 	if (!initRenderPipeline()) return false;
 	if (!initGeometry()) return false;
+	initUniformBuffer();
+	
+	initUniforms(0, transpose(mat4x4(	 1, 0, 0, 0,
+															0,1, 0, 0,
+															0, 0, 1, 0,
+															0, 0, 0, 1)));
 	if (!initUniforms()) return false;
 	if (!initBindGroup()) return false;
 	if (!initGui()) return false;
@@ -41,8 +47,6 @@ void Application::onFrame() {
 	glfwPollEvents();
 
 	// Update uniform buffer
-	m_uniforms.time = static_cast<float>(glfwGetTime());
-	m_queue.writeBuffer(m_uniformBuffer, offsetof(MyUniforms, time), &m_uniforms.time, sizeof(MyUniforms::time));
 	
 	TextureView nextTexture = m_swapChain.getCurrentTextureView();
 	if (!nextTexture) {
@@ -52,7 +56,7 @@ void Application::onFrame() {
 
 	CommandEncoderDescriptor commandEncoderDesc;
 	commandEncoderDesc.label = "Command Encoder";
-	CommandEncoder encoder = m_device.createCommandEncoder(commandEncoderDesc);
+	CommandEncoder encoder = mDevice.createCommandEncoder(commandEncoderDesc);
 	
 	RenderPassDescriptor renderPassDesc{};
 
@@ -109,14 +113,14 @@ void Application::onFrame() {
 	cmdBufferDescriptor.label = "Command buffer";
 	CommandBuffer command = encoder.finish(cmdBufferDescriptor);
 	encoder.release();
-	m_queue.submit(command);
+	mQueue.submit(command);
 	command.release();
 
 	m_swapChain.present();
 
 #ifdef WEBGPU_BACKEND_DAWN
 	// Check for pending error callbacks
-	m_device.tick();
+	mDevice.tick();
 #endif
 }
 
@@ -177,8 +181,7 @@ bool Application::initWindowAndDevice() {
 	Adapter adapter = m_instance.requestAdapter(adapterOpts);
 	std::cout << "Got adapter: " << adapter << std::endl;
 
-	SupportedLimits supportedLimits;
-	adapter.getLimits(&supportedLimits);
+	adapter.getLimits(&mSupportedLimits);
 
 	std::cout << "Requesting device..." << std::endl;
 	RequiredLimits requiredLimits = Default;
@@ -186,8 +189,8 @@ bool Application::initWindowAndDevice() {
 	requiredLimits.limits.maxVertexBuffers = 1;
 	requiredLimits.limits.maxBufferSize = 150000 * sizeof(VertexAttributes);
 	requiredLimits.limits.maxVertexBufferArrayStride = sizeof(VertexAttributes);
-	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
-	requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
+	requiredLimits.limits.minStorageBufferOffsetAlignment = mSupportedLimits.limits.minStorageBufferOffsetAlignment;
+	requiredLimits.limits.minUniformBufferOffsetAlignment = mSupportedLimits.limits.minUniformBufferOffsetAlignment;
 	requiredLimits.limits.maxInterStageShaderComponents = 8;
 	requiredLimits.limits.maxBindGroups = 2;
 	//                                    ^ This was a 1
@@ -206,24 +209,24 @@ bool Application::initWindowAndDevice() {
 	deviceDesc.requiredFeaturesCount = 0;
 	deviceDesc.requiredLimits = &requiredLimits;
 	deviceDesc.defaultQueue.label = "The default queue";
-	m_device = adapter.requestDevice(deviceDesc);
-	std::cout << "Got device: " << m_device << std::endl;
+	mDevice = adapter.requestDevice(deviceDesc);
+	std::cout << "Got device: " << mDevice << std::endl;
 
 	// Add an error callback for more debug info
-	m_errorCallbackHandle = m_device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+	m_errorCallbackHandle = mDevice.setUncapturedErrorCallback([](ErrorType type, char const* message) {
 		std::cout << "Device error: type " << type;
 		if (message) std::cout << " (message: " << message << ")";
 		std::cout << std::endl;
 	});
 
-	m_queue = m_device.getQueue();
+	mQueue = mDevice.getQueue();
 	adapter.release();
-	return m_device != nullptr;
+	return mDevice != nullptr;
 }
 
 void Application::terminateWindowAndDevice() {
-	m_queue.release();
-	m_device.release();
+	mQueue.release();
+	mDevice.release();
 	m_surface.release();
 	m_instance.release();
 
@@ -244,7 +247,7 @@ bool Application::initSwapChain() {
 	swapChainDesc.usage = TextureUsage::RenderAttachment;
 	swapChainDesc.format = mSwapChainFormat;
 	swapChainDesc.presentMode = PresentMode::Fifo;
-	m_swapChain = m_device.createSwapChain(m_surface, swapChainDesc);
+	m_swapChain = mDevice.createSwapChain(m_surface, swapChainDesc);
 	std::cout << "Swapchain: " << m_swapChain << std::endl;
 	return m_swapChain != nullptr;
 }
@@ -269,7 +272,7 @@ bool Application::initDepthBuffer() {
 	depthTextureDesc.usage = TextureUsage::RenderAttachment;
 	depthTextureDesc.viewFormatCount = 1;
 	depthTextureDesc.viewFormats = (WGPUTextureFormat*)&mDepthTextureFormat;
-	m_depthTexture = m_device.createTexture(depthTextureDesc);
+	m_depthTexture = mDevice.createTexture(depthTextureDesc);
 	std::cout << "Depth texture: " << m_depthTexture << std::endl;
 
 	// Create the view of the depth texture manipulated by the rasterizer
@@ -321,7 +324,7 @@ ShaderModule Application::loadShaderModule(const std::filesystem::path& path, De
 
 bool Application::initRenderPipeline() {
 	std::cout << "Creating shader module..." << std::endl;
-	m_shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", m_device);
+	m_shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", mDevice);
 	std::cout << "Shader module: " << m_shaderModule << std::endl;
 
 	std::cout << "Creating render pipeline..." << std::endl;
@@ -413,16 +416,16 @@ bool Application::initRenderPipeline() {
 	BindGroupLayoutDescriptor bindGroupLayoutDesc{};
 	bindGroupLayoutDesc.entryCount = bindGroupLayoutDescEntryCount;
 	bindGroupLayoutDesc.entries = &mBindingLayout;
-	mBindGroupLayout = m_device.createBindGroupLayout(bindGroupLayoutDesc);
+	mBindGroupLayout = mDevice.createBindGroupLayout(bindGroupLayoutDesc);
 
 	// Create the pipeline layout
 	PipelineLayoutDescriptor layoutDesc{};
 	layoutDesc.bindGroupLayoutCount = 1;
 	layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&mBindGroupLayout;
-	PipelineLayout layout = m_device.createPipelineLayout(layoutDesc);
+	PipelineLayout layout = mDevice.createPipelineLayout(layoutDesc);
 	pipelineDesc.layout = layout;
 
-	m_pipeline = m_device.createRenderPipeline(pipelineDesc);
+	m_pipeline = mDevice.createRenderPipeline(pipelineDesc);
 	std::cout << "Render pipeline: " << m_pipeline << std::endl;
 
 	return m_pipeline != nullptr;
@@ -431,7 +434,7 @@ bool Application::initRenderPipeline() {
 void Application::terminateRenderPipeline() {
 	m_pipeline.release();
 	m_shaderModule.release();
-	m_bindGroupLayout.release();
+	mBindGroupLayout.release();
 }
 
 void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.obj"
@@ -506,15 +509,15 @@ void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.
 
 bool Application::initGeometry() {
 	// Load mesh data from OBJ file
-	loadGeometry("Globe.obj", m_device);
+	loadGeometry("Globe.obj", mDevice);
 
 	// Create vertex buffer
 	BufferDescriptor bufferDesc;
 	bufferDesc.size = mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(VertexAttributes);
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
-	m_vertexBuffer = m_device.createBuffer(bufferDesc);
-	m_queue.writeBuffer(m_vertexBuffer, 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size);
+	m_vertexBuffer = mDevice.createBuffer(bufferDesc);
+	mQueue.writeBuffer(m_vertexBuffer, 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size);
 
 	m_vertexCount = static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size());
 
@@ -525,29 +528,6 @@ void Application::terminateGeometry() {
 	m_vertexBuffer.destroy();
 	m_vertexBuffer.release();
 	m_vertexCount = 0;
-}
-
-
-bool Application::initUniforms() {
-	// Create uniform buffer
-	BufferDescriptor bufferDesc;
-	bufferDesc.size = sizeof(MyUniforms);
-	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
-	bufferDesc.mappedAtCreation = false;
-	m_uniformBuffer = m_device.createBuffer(bufferDesc);
-
-	// Upload the initial value of the uniforms
-	m_uniforms.modelMatrix = mat4x4(1.0);
-	m_uniforms.viewMatrix = glm::lookAt(vec3(-2.0f, -3.0f, 2.0f), vec3(0.0f), vec3(0, 0, 1));
-	m_uniforms.projectionMatrix = glm::perspective(45 * PI / 180, 640.0f / 480.0f, 0.01f, 100.0f);
-	m_uniforms.time = 1.0f;
-	m_uniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
-	m_queue.writeBuffer(m_uniformBuffer, 0, &m_uniforms, sizeof(MyUniforms));
-
-	updateProjectionMatrix();
-	updateViewMatrix();
-
-	return m_uniformBuffer != nullptr;
 }
 
 void Application::terminateUniforms() {
@@ -569,7 +549,7 @@ bool Application::initBindGroup() {
 	bindGroupDesc.layout = mBindGroupLayout;
 	bindGroupDesc.entryCount = (uint32_t)bindings.size();
 	bindGroupDesc.entries = bindings.data();
-	m_bindGroup = m_device.createBindGroup(bindGroupDesc);
+	m_bindGroup = mDevice.createBindGroup(bindGroupDesc);
 
 	return m_bindGroup != nullptr;
 }
@@ -578,33 +558,54 @@ void Application::terminateBindGroup() {
 	m_bindGroup.release();
 }
 
-void Application::updateProjectionMatrix() {
-	// Update projection matrix
-	int width, height;
-	glfwGetFramebufferSize(m_window, &width, &height);
-	float ratio = width / (float)height;
-	m_uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
-	m_queue.writeBuffer(
-		m_uniformBuffer,
-		offsetof(MyUniforms, projectionMatrix),
-		&m_uniforms.projectionMatrix,
-		sizeof(MyUniforms::projectionMatrix)
-	);
+void Application::initUniforms(int index, const mat4x4& rotation){
+	// Build transform matrices
+
+	// Translate the view
+	vec3 focalPoint(0.0, 0.0, -2.0);
+	// Rotate the object
+	angle1 = 2.0f; // arbitrary time
+	// Rotate the view point
+	angle2 = 3.0f * PI / 4.0f;
+
+	S = glm::scale(mat4x4(1.0), vec3(0.3f));
+	T1 = mat4x4(1.0);
+	R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
+	mUniforms.modelMatrix = R1 * T1 * S;
+
+	mat4x4 R2 = glm::rotate(mat4x4(1.0), -angle2, vec3(1.0, 0.0, 0.0));
+	mat4x4 T2 = glm::translate(mat4x4(1.0), -focalPoint);
+	mUniforms.viewMatrix = T2 * R2;
+
+	float ratio = static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT);
+	float focalLength = 2.0;
+	float near = 0.01f;
+	float far = 100.0f;
+	float divider = 1 / (focalLength * (far - near));
+	mUniforms.projectionMatrix = transpose(mat4x4(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, ratio, 0.0, 0.0,
+		0.0, 0.0, far * divider, -far * near * divider,
+		0.0, 0.0, 1.0 / focalLength, 0.0
+	));
+
+	mUniforms.time = 1.0f;
+	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
+	mUniforms.rotation = rotation;
+	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(MyUniforms));
 }
 
-void Application::updateViewMatrix() {
-	float cx = cos(m_cameraState.angles.x);
-	float sx = sin(m_cameraState.angles.x);
-	float cy = cos(m_cameraState.angles.y);
-	float sy = sin(m_cameraState.angles.y);
-	vec3 position = vec3(cx * cy, sx * cy, sy) * std::exp(-m_cameraState.zoom);
-	m_uniforms.viewMatrix = glm::lookAt(position, vec3(0.0f), vec3(0, 0, 1));
-	m_queue.writeBuffer(
-		m_uniformBuffer,
-		offsetof(MyUniforms, viewMatrix),
-		&m_uniforms.viewMatrix,
-		sizeof(MyUniforms::viewMatrix)
-	);
+void Application::initUniformBuffer(){
+	BufferDescriptor bufferDesc;
+	bufferDesc.size = MAX_BUFFER_SIZE; // changed
+	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
+	bufferDesc.mappedAtCreation = false;
+	// Create uniform buffer
+	mUniformStride = std::ceil(static_cast<double>(sizeof(MyUniforms))/mSupportedLimits.limits.minUniformBufferOffsetAlignment) * mSupportedLimits.limits.minUniformBufferOffsetAlignment;
+	bufferDesc.size = (MAX_NUM_UNIFORMS - 1) * mUniformStride + sizeof(MyUniforms);
+	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
+	bufferDesc.mappedAtCreation = false;
+	mUniformBuffer = mDevice.createBuffer(bufferDesc);
 }
 
 bool Application::initGui() {
@@ -618,7 +619,7 @@ bool Application::initGui() {
 	ImGui_ImplWGPU_InitInfo initInfo;
 	initInfo.DepthStencilFormat = mDepthTextureFormat;
 	initInfo.RenderTargetFormat = mSwapChainFormat;
-	initInfo.Device = m_device;
+	initInfo.Device = mDevice;
 	initInfo.NumFramesInFlight = 3;
 	ImGui_ImplWGPU_Init(&initInfo);
 	return true;
