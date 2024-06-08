@@ -126,9 +126,7 @@ private:
 	// Geometry
 	wgpu::Buffer m_vertexBuffer = nullptr;
 	int m_vertexCount = 0;
-
-	// Uniforms
-
+	
 	// Bind Group
 	wgpu::BindGroup m_bindGroup = nullptr;
 
