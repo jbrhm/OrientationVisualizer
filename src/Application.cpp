@@ -126,6 +126,8 @@ void Application::onFrame() {
 	// We add the GUI drawing commands to the render pass
 	updateGui(renderPass);
 
+	writeRotation();
+
 	std::cout << "Current Quaternion Input: " << q0 << ", " << q1 << ", " << q2 << ", " << q3 << std::endl; 
 
 	renderPass.end();
@@ -317,6 +319,14 @@ void Application::terminateDepthBuffer() {
 	m_depthTextureView.release();
 	m_depthTexture.destroy();
 	m_depthTexture.release();
+}
+
+void Application::writeRotation(){
+	SE3 = transpose(mat4x4(       2 * (std::pow(q0, 2) + std::pow(q1, 2)) - 1, 2 * (q1 * q2 - q0 * q3), 2 * (q1 * q3 + q0 * q2), 0,
+									 2 * (q1 * q2 + q0 * q3), 2 * (std::pow(q0, 2) + std::pow(q2, 2)) - 1, 2 * (q2 * q3 - q0 * q1), 0,
+									 2 * (q1 * q3 - q0 * q2), 2 * (q2 *q3 + q0 *q1), 2 * (std::pow(q0, 2) + std::pow(q3, 2)) - 1, 0,
+									 0, 0, 0, 1));
+	mQueue.writeBuffer(mUniformBuffer, mUniformStride + offsetof(MyUniforms, rotation), &SE3, sizeof(MyUniforms::rotation));
 }
 
 ShaderModule Application::loadShaderModule(const std::filesystem::path& path, Device device) {

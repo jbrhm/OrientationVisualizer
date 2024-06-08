@@ -141,6 +141,7 @@ private:
 	std::vector<wgpu::Buffer> mVertexBuffers;
 	void initVertexBuffer();
 	std::vector<int> mIndexCounts;
+	void writeRotation();
 	MyUniforms mUniforms;
 
 	// Uniform Variables
@@ -149,6 +150,8 @@ private:
     glm::mat4x4 S;
 	glm::mat4x4 T1;
 	glm::mat4x4 R1;
+
+	glm::mat4x4 SE3;
 
 	//IMGUI variables
 	float f = 0;
