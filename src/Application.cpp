@@ -19,6 +19,9 @@
 #include <array>
 
 using namespace wgpu;
+using glm::mat4x4;
+using glm::vec4;
+using glm::vec3;
 
 constexpr float PI = 3.14159265358979323846f;
 
@@ -37,7 +40,6 @@ bool Application::onInit() {
 															0,1, 0, 0,
 															0, 0, 1, 0,
 															0, 0, 0, 1)));
-	if (!initUniforms()) return false;
 	if (!initBindGroup()) return false;
 	if (!initGui()) return false;
 	return true;
@@ -148,7 +150,6 @@ void Application::onResize() {
 	initSwapChain();
 	initDepthBuffer();
 
-	updateProjectionMatrix();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -531,8 +532,8 @@ void Application::terminateGeometry() {
 }
 
 void Application::terminateUniforms() {
-	m_uniformBuffer.destroy();
-	m_uniformBuffer.release();
+	mUniformBuffer.destroy();
+	mUniformBuffer.release();
 }
 
 
@@ -541,7 +542,7 @@ bool Application::initBindGroup() {
 	std::vector<BindGroupEntry> bindings(1);
 
 	bindings[0].binding = 0;
-	bindings[0].buffer = m_uniformBuffer;
+	bindings[0].buffer = mUniformBuffer;
 	bindings[0].offset = 0;
 	bindings[0].size = sizeof(MyUniforms);
 

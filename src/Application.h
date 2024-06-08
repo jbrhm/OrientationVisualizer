@@ -57,13 +57,11 @@ private:
 	bool initGeometry();
 	void terminateGeometry();
 
-	bool initUniforms();
 	void terminateUniforms();
 
 	bool initBindGroup();
 	void terminateBindGroup();
 
-	void updateProjectionMatrix();
 	void updateViewMatrix();
 	void updateDragInertia();
 
@@ -76,11 +74,6 @@ private:
 	void loadGeometry(const std::string& url, int uniformID);
 
 private:
-	// (Just aliases to make notations lighter)
-	using mat4x4 = glm::mat4x4;
-	using vec4 = glm::vec4;
-	using vec3 = glm::vec3;
-	using vec2 = glm::vec2;
 
 	/**
 	 * The same structure as in the shader, replicated in C++
@@ -97,14 +90,6 @@ private:
     };
 	// Have the compiler check byte alignment
 	static_assert(sizeof(MyUniforms) % 16 == 0);
-
-	struct CameraState {
-		// angles.x is the rotation of the camera around the global vertical axis, affected by mouse.x
-		// angles.y is the rotation of the camera around its local horizontal axis, affected by mouse.y
-		vec2 angles = { 0.8f, 0.5f };
-		// zoom is the position of the camera along its local forward axis, affected by the scroll wheel
-		float zoom = -1.2f;
-	};
 
 	struct VertexAttributes {
         glm::vec3 position;
@@ -143,12 +128,10 @@ private:
 	int m_vertexCount = 0;
 
 	// Uniforms
-	wgpu::Buffer m_uniformBuffer = nullptr;
 
 	// Bind Group
 	wgpu::BindGroup m_bindGroup = nullptr;
 
-	CameraState m_cameraState;
 
 	// New Stuff
 	std::vector<std::vector<VertexAttributes>> mVertexDatas;
@@ -157,13 +140,13 @@ private:
 	std::vector<int> mUniformIndices;
 	wgpu::BindGroupLayoutEntry mBindingLayout;
 	wgpu::BindGroupLayout mBindGroupLayout = nullptr;
-	void initUniforms(int index, const mat4x4& rotation);
+	void initUniforms(int index, const glm::mat4x4& rotation);
 	void initUniformBuffer();
 	MyUniforms mUniforms;
 
 	// Uniform Variables
-	double angle1;
-	double angle2;
+	float angle1;
+	float angle2;
     glm::mat4x4 S;
 	glm::mat4x4 T1;
 	glm::mat4x4 R1;
