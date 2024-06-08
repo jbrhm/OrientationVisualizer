@@ -154,11 +154,21 @@ private:
 	glm::mat4x4 SE3;
 
 	//IMGUI variables
-	float f = 0;
-	double q0 = 0;
-	double q1 = 0;
-	double q2 = 0;
-	double q3 = 0;
+	float imguiScale = 2.0f;
+	int inputBoxSize = 76;
+
+	bool isQuaternion = true;
+	double q0 = 0.5;
+	double q1 = 0.5;
+	double q2 = 0.5;
+	double q3 = 0.5;
+
+	bool isSO3 = false;
+	double i00 = 1, i01 = 0, i02 = 0;
+	double i10 = 0, i11 = 1, i12 = 0;
+	double i20 = 0, i21 = 0, i22 = 1;
+
+	bool isLieAlgebra = false;
 	
 
 	// CONSTANTS
@@ -167,8 +177,10 @@ private:
 	wgpu::SupportedLimits mSupportedLimits;
 
 
-	static constexpr int WINDOW_WIDTH = 1280;
-	static constexpr int WINDOW_HEIGHT = 720;
+	static constexpr int WINDOW_WIDTH = 1920;
+	static constexpr int WINDOW_HEIGHT = 1080;
+
+	static constexpr int IMGUI_DOUBLE_SCALAR = 9;
 
 	static constexpr int MAX_NUM_UNIFORMS = 2;
 

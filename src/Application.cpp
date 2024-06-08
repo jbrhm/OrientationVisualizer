@@ -45,9 +45,9 @@ bool Application::onInit() {
 															0, 0, 1, 0,
 															0, 0, 0, 1)));
 	
-	initUniforms(1, transpose(mat4x4(	 1, 0, 0, 0,
-															0, 1, 0, 0,
+	initUniforms(1, transpose(mat4x4(	 0, 1, 0, 0,
 															0, 0, 1, 0,
+															1, 0, 0, 0,
 															0, 0, 0, 1)));
 	if (!initBindGroup()) return false;
 	if (!initGui()) return false;
@@ -128,8 +128,6 @@ void Application::onFrame() {
 
 	writeRotation();
 
-	std::cout << "Current Quaternion Input: " << q0 << ", " << q1 << ", " << q2 << ", " << q3 << std::endl; 
-
 	renderPass.end();
 	renderPass.release();
 	
@@ -192,7 +190,7 @@ bool Application::initWindowAndDevice() {
 	}
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Learn WebGPU", NULL, NULL);
 	if (!m_window) {
 		std::cerr << "Could not open window!" << std::endl;
@@ -322,10 +320,18 @@ void Application::terminateDepthBuffer() {
 }
 
 void Application::writeRotation(){
-	SE3 = transpose(mat4x4(       2 * (std::pow(q0, 2) + std::pow(q1, 2)) - 1, 2 * (q1 * q2 - q0 * q3), 2 * (q1 * q3 + q0 * q2), 0,
+	if(isQuaternion){
+		SE3 = transpose(mat4x4(   2 * (std::pow(q0, 2) + std::pow(q1, 2)) - 1, 2 * (q1 * q2 - q0 * q3), 2 * (q1 * q3 + q0 * q2), 0,
 									 2 * (q1 * q2 + q0 * q3), 2 * (std::pow(q0, 2) + std::pow(q2, 2)) - 1, 2 * (q2 * q3 - q0 * q1), 0,
 									 2 * (q1 * q3 - q0 * q2), 2 * (q2 *q3 + q0 *q1), 2 * (std::pow(q0, 2) + std::pow(q3, 2)) - 1, 0,
 									 0, 0, 0, 1));
+	}else if(isSO3){
+		SE3 = transpose(mat4x4(	i00, i01, i02, 0,
+									i10, i11, i12, 0,
+									i20, i21, i22, 0,
+									0,   0,   0,   1));
+	}
+	
 	mQueue.writeBuffer(mUniformBuffer, mUniformStride + offsetof(MyUniforms, rotation), &SE3, sizeof(MyUniforms::rotation));
 }
 
@@ -597,7 +603,7 @@ void Application::initUniforms(int index, const mat4x4& rotation){
 	// Build transform matrices
 
 	// Translate the view
-	vec3 focalPoint(0.0, 0.0, -2.0);
+	vec3 focalPoint(-0.25, 0.0, -2.0);
 	// Rotate the object
 	angle1 = 2.0f; // arbitrary time
 	// Rotate the view point
@@ -657,6 +663,10 @@ bool Application::initGui() {
 	initInfo.Device = mDevice;
 	initInfo.NumFramesInFlight = 3;
 	ImGui_ImplWGPU_Init(&initInfo);
+
+	// Adjust font
+	ImGuiIO& io = ImGui::GetIO();
+	io.FontGlobalScale = imguiScale;
 	return true;
 }
 
@@ -673,40 +683,63 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 
 	// Build our UI
 	{
-		f = 0.0f;
-		static int counter = 0;
-		static bool show_demo_window = true;
-		static bool show_another_window = false;
-		static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		ImGui::Begin("Orientation Visualizer");                                // Create a window called "Hello, world!" and append into it.
 
-		ImGui::Begin("Hello, world!");                                // Create a window called "Hello, world!" and append into it.
+		ImGui::Text("Which input would you like?");                     // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Quaternion: ", &isQuaternion);            // Edit bools storing our window open/close state
+		ImGui::Checkbox("SO3: ", &isSO3);
+		ImGui::Checkbox("Lie Algebra: ", &isLieAlgebra);
 
-		ImGui::Text("This is some useful text.");                     // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Demo Window", &show_demo_window);            // Edit bools storing our window open/close state
-		ImGui::Checkbox("Another Window", &show_another_window);
+		// Decision tree for each of the different display states
+		if(isQuaternion){
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("q0", IMGUI_DOUBLE_SCALAR, &q0); // Input type 9 is double
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("q1", IMGUI_DOUBLE_SCALAR, &q1); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("q2", IMGUI_DOUBLE_SCALAR, &q2); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("q3", IMGUI_DOUBLE_SCALAR, &q3); 
+		}else if(isSO3){
+			ImGui::Text("SO3 Matrix:");
 
-		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);                  // Edit 1 float using a slider from 0.0f to 1.0f
-		ImGui::ColorEdit3("clear color", (float*)&clear_color);       // Edit 3 floats representing a color
+			// Row 1
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(0,0)", IMGUI_DOUBLE_SCALAR, &i00); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(0,1)", IMGUI_DOUBLE_SCALAR, &i01); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(0,2)", IMGUI_DOUBLE_SCALAR, &i02); 
+			
+			// Row 2
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(1,0)", IMGUI_DOUBLE_SCALAR, &i10); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(1,1)", IMGUI_DOUBLE_SCALAR, &i11); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(1,2)", IMGUI_DOUBLE_SCALAR, &i12); 
 
-		if (ImGui::Button("Button"))                                  // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
-		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-
+			// Row 2
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(2,0)", IMGUI_DOUBLE_SCALAR, &i20); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(2,1)", IMGUI_DOUBLE_SCALAR, &i21); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &i22); 
+		}
+		
+		// Display the refresh rate
 		ImGuiIO& io = ImGui::GetIO();
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		ImGui::SetNextItemWidth(100);
-		ImGui::InputScalar("q0", 9, &q0); // Input type 9 is double
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(100);
-		ImGui::InputScalar("q1", 9, &q1); // Input type 9 is double
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(100);
-		ImGui::InputScalar("q2", 9, &q2); // Input type 9 is double
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(100);
-		ImGui::InputScalar("q3", 9, &q3); // Input type 9 is double
-		ImGui::SameLine();
 		ImGui::End();
 	}
 
