@@ -42,7 +42,7 @@ endif()
 
 target_include_directories(App PRIVATE .)
 
-target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu glm assimp imgui)
+target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu glm assimp imgui eigen)
 
 set_target_properties(App PROPERTIES
 	CXX_STANDARD 17
