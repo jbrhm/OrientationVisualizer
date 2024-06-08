@@ -49,7 +49,13 @@ void Application::onFrame() {
 	glfwPollEvents();
 
 	// Update uniform buffer
-	
+	mUniforms.time = static_cast<float>(glfwGetTime()); // glfwGetTime returns a double
+	// Update view matrix
+	angle1 = mUniforms.time;
+	R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
+	mUniforms.modelMatrix = R1 * T1 * S;
+	mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
+
 	TextureView nextTexture = m_swapChain.getCurrentTextureView();
 	if (!nextTexture) {
 		std::cerr << "Cannot acquire next swap chain texture" << std::endl;
