@@ -84,7 +84,7 @@ private:
         glm::mat4x4 modelMatrix;
         glm::mat4x4 rotation;
         std::array<float, 4> color;
-        float time;
+        float zScalar;
         float _pad[3];
     };
 	// Have the compiler check byte alignment
@@ -169,6 +169,11 @@ private:
 	double i20 = 0, i21 = 0, i22 = 1;
 
 	bool isLieAlgebra = false;
+	double l100 = 1, l101 = 0, l102 = 0;
+	double l110 = 0, l111 = 1, l112 = 0;
+	double l120 = 0, l121 = 0, l122 = 1;
+
+	float mZScalar = 1.0f;
 	
 
 	// CONSTANTS
@@ -181,8 +186,10 @@ private:
 	static constexpr int WINDOW_HEIGHT = 1080;
 
 	static constexpr int IMGUI_DOUBLE_SCALAR = 9;
+	static constexpr int IMGUI_FLOAT_SCALAR = 8;
 
-	static constexpr int MAX_NUM_UNIFORMS = 2;
+
+	static constexpr int MAX_NUM_UNIFORMS = 3;
 
 	static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
 

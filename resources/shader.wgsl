@@ -19,7 +19,7 @@ struct MyUniforms {
     modelMatrix: mat4x4f,
 	rotation: mat4x4f,
     color: vec4f,
-    time: f32,
+    zScalar: f32,
 };
 
 // Instead of the simple uTime variable, our uniform variable is a struct
@@ -27,8 +27,11 @@ struct MyUniforms {
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
+	var pos: vec3f;
+	pos = in.position;
+	pos.z = pos.z * uMyUniforms.zScalar;
 	var out: VertexOutput;
-	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(in.position, 1.0);
+	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(pos, 1.0);
 	// Forward the normal
     out.normal = (uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(in.normal, 0.0)).xyz;
 	out.color = in.color;

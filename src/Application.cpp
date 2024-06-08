@@ -11,6 +11,10 @@
 #include <backends/imgui_impl_wgpu.h>
 #include <backends/imgui_impl_glfw.h>
 
+#include <Eigen/Core>
+#include <Eigen/QR>
+#include "LieAlgebra.hpp"
+
 #include <iostream>
 #include <cassert>
 #include <filesystem>
@@ -38,6 +42,8 @@ bool Application::onInit() {
 
 	loadGeometry("coords.obj", 1);
 
+	loadGeometry("vector.obj", 2);
+
 	initUniformBuffer();
 	
 	initUniforms(0, transpose(mat4x4(	 1, 0, 0, 0,
@@ -49,6 +55,10 @@ bool Application::onInit() {
 															0, 0, 1, 0,
 															1, 0, 0, 0,
 															0, 0, 0, 1)));
+	initUniforms(2, transpose(mat4x4(	 1, 0, 0, 0,
+															0, 1, 0, 0,
+															0, 0, 1, 0,
+															0, 0, 0, 1)));
 	if (!initBindGroup()) return false;
 	if (!initGui()) return false;
 	return true;
@@ -56,15 +66,6 @@ bool Application::onInit() {
 
 void Application::onFrame() {
 	glfwPollEvents();
-
-	// Update uniform buffer
-	mUniforms.time = static_cast<float>(glfwGetTime()); // glfwGetTime returns a double
-	// Update view matrix
-	angle1 = mUniforms.time;
-	R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
-	mUniforms.modelMatrix = R1 * T1 * S;
-	mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
-
 	TextureView nextTexture = m_swapChain.getCurrentTextureView();
 	if (!nextTexture) {
 		std::cerr << "Cannot acquire next swap chain texture" << std::endl;
@@ -109,6 +110,38 @@ void Application::onFrame() {
 	RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
 
 	renderPass.setPipeline(m_pipeline);
+
+	// State Machine For Rendering different meshes depending on which mode the user has chosen
+	if(isQuaternion || isSO3){
+		// Update uniform buffer
+		// Update view matrix
+		angle1 = static_cast<float>(glfwGetTime());
+		R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
+		mUniforms.modelMatrix = R1 * T1 * S;
+		mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
+	}else if(isLieAlgebra){
+		// TODO: Make sure that this actually valid for sin(theta) = 0
+		Eigen::Matrix3d so3;
+		so3 << 	l100, l101, l102, 
+				l110, l111, l112,
+				l120, l121, l122;
+		Eigen::Vector3d v = LieAlgebra::logarithmicMap(so3);
+		
+		Eigen::HouseholderQR<Eigen::Matrix3d> qr;
+		Eigen::Matrix3d vectorMatrix;
+		vectorMatrix << v.x(), v.x(), v.x(),
+						v.y(), v.y(), v.y() + 1,
+						v.z(), v.z() + 1, v.z(),
+		qr.compute(vectorMatrix);
+
+		Eigen::MatrixXf thinQ(Eigen::MatrixXf::Identity(3,3));
+
+		Eigen::Matrix3d rotation = qr.householderQ();
+
+		rotation.all();
+
+		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
+	}
 
 	// Set binding group
 	uint32_t dynamicOffset = 0;
@@ -630,7 +663,7 @@ void Application::initUniforms(int index, const mat4x4& rotation){
 		0.0, 0.0, 1.0 / focalLength, 0.0
 	));
 
-	mUniforms.time = 1.0f;
+	mUniforms.zScalar = 1.0f;
 	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
 	mUniforms.rotation = rotation;
 	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(MyUniforms));
@@ -735,6 +768,41 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
 			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &i22); 
+		}else if(isLieAlgebra){
+			ImGui::Text("SO3 Matrix:");
+
+			// Row 1
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(0,0)", IMGUI_DOUBLE_SCALAR, &l100); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(0,1)", IMGUI_DOUBLE_SCALAR, &l101); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(0,2)", IMGUI_DOUBLE_SCALAR, &l102); 
+			
+			// Row 2
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(1,0)", IMGUI_DOUBLE_SCALAR, &l110); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(1,1)", IMGUI_DOUBLE_SCALAR, &l111); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(1,2)", IMGUI_DOUBLE_SCALAR, &l112); 
+
+			// Row 2
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(2,0)", IMGUI_DOUBLE_SCALAR, &l120); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(2,1)", IMGUI_DOUBLE_SCALAR, &l121); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &l122); 
+
+			ImGui::InputScalar("zScalar", IMGUI_FLOAT_SCALAR, &mZScalar); 
+
 		}
 		
 		// Display the refresh rate
