@@ -54,7 +54,6 @@ private:
 	bool initTexture();
 	void terminateTexture();
 
-	bool initGeometry();
 	void terminateGeometry();
 
 	void terminateUniforms();
@@ -151,6 +150,8 @@ private:
 	glm::mat4x4 T1;
 	glm::mat4x4 R1;
 
+	//IMGUI variables
+	float f = 0;
 
 	// CONSTANTS
 	wgpu::Buffer mUniformBuffer = nullptr;

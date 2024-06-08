@@ -126,6 +126,8 @@ void Application::onFrame() {
 	// We add the GUI drawing commands to the render pass
 	updateGui(renderPass);
 
+	std::cout << f << std::endl; 
+
 	renderPass.end();
 	renderPass.release();
 	
@@ -546,13 +548,6 @@ void Application::initVertexBuffer(){
 	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size())); // changed
 }
 
-bool Application::initGeometry() {
-	// Load mesh data from OBJ file
-	
-
-	return m_vertexBuffer != nullptr;
-}
-
 void Application::terminateGeometry() {
 	for(auto buff : mVertexBuffers){
 		buff.destroy();
@@ -668,7 +663,7 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 
 	// Build our UI
 	{
-		static float f = 0.0f;
+		f = 0.0f;
 		static int counter = 0;
 		static bool show_demo_window = true;
 		static bool show_another_window = false;
