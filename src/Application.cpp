@@ -1,6 +1,7 @@
 #include "Application.h"
 #include <glfw3webgpu.h>
 #include <GLFW/glfw3.h>
+#include <glm/fwd.hpp>
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_LEFT_HANDED
@@ -138,9 +139,28 @@ void Application::onFrame() {
 
 		Eigen::Matrix3d rotation = qr.householderQ();
 
-		rotation.all();
+		rotationGLM[0][0] = rotation.coeff(0,0);
+		rotationGLM[0][1] = rotation.coeff(0,1);
+		rotationGLM[0][2] = rotation.coeff(0,2);
+		rotationGLM[0][3] = 0;
+		rotationGLM[1][0] = rotation.coeff(1,0);
+		rotationGLM[1][1] = rotation.coeff(1,1);
+		rotationGLM[1][2] = rotation.coeff(1,2);
+		rotationGLM[1][3] = 0;
+		rotationGLM[2][0] = rotation.coeff(2,0);
+		rotationGLM[2][1] = rotation.coeff(2,1);
+		rotationGLM[2][2] = rotation.coeff(2,2);
+		rotationGLM[2][3] = 0;
+		rotationGLM[3][0] = 0;
+		rotationGLM[3][1] = 0;
+		rotationGLM[3][2] = 0;
+		rotationGLM[3][3] = 1;
+
 
 		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
+
+		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, rotation), &rotationGLM, sizeof(MyUniforms::rotation));
+
 	}
 
 	// Set binding group

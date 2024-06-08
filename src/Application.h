@@ -174,6 +174,7 @@ private:
 	double l120 = 0, l121 = 0, l122 = 1;
 
 	float mZScalar = 1.0f;
+	glm::mat4x4 rotationGLM;
 	
 
 	// CONSTANTS
