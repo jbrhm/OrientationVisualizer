@@ -114,7 +114,6 @@ private:
 	wgpu::TextureView m_depthTextureView = nullptr;
 
 	// Render Pipeline
-	wgpu::BindGroupLayout m_bindGroupLayout = nullptr;
 	wgpu::ShaderModule m_shaderModule = nullptr;
 	wgpu::RenderPipeline m_pipeline = nullptr;
 
@@ -128,7 +127,7 @@ private:
 	int m_vertexCount = 0;
 	
 	// Bind Group
-	wgpu::BindGroup m_bindGroup = nullptr;
+	wgpu::BindGroup mBindGroup = nullptr;
 
 
 	// New Stuff
@@ -140,6 +139,9 @@ private:
 	wgpu::BindGroupLayout mBindGroupLayout = nullptr;
 	void initUniforms(int index, const glm::mat4x4& rotation);
 	void initUniformBuffer();
+	std::vector<wgpu::Buffer> mVertexBuffers;
+	void initVertexBuffer();
+	std::vector<int> mIndexCounts;
 	MyUniforms mUniforms;
 
 	// Uniform Variables

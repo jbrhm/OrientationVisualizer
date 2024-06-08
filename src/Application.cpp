@@ -33,11 +33,20 @@ bool Application::onInit() {
 	if (!initSwapChain()) return false;
 	if (!initDepthBuffer()) return false;
 	if (!initRenderPipeline()) return false;
-	if (!initGeometry()) return false;
+
+	loadGeometry("Globe.obj", 0);
+
+	loadGeometry("coords.obj", 1);
+
 	initUniformBuffer();
 	
 	initUniforms(0, transpose(mat4x4(	 1, 0, 0, 0,
 															0,1, 0, 0,
+															0, 0, 1, 0,
+															0, 0, 0, 1)));
+	
+	initUniforms(1, transpose(mat4x4(	 1, 0, 0, 0,
+															0, 1, 0, 0,
 															0, 0, 1, 0,
 															0, 0, 0, 1)));
 	if (!initBindGroup()) return false;
@@ -101,13 +110,18 @@ void Application::onFrame() {
 
 	renderPass.setPipeline(m_pipeline);
 
-	renderPass.setVertexBuffer(0, m_vertexBuffer, 0, m_vertexCount * sizeof(VertexAttributes));
-
 	// Set binding group
 	uint32_t dynamicOffset = 0;
-	renderPass.setBindGroup(0, m_bindGroup, 1, &dynamicOffset);
+	for(size_t i = 0; i < mVertexDatas.size(); ++i){
+		dynamicOffset = mUniformStride * mUniformIndices[i];
 
-	renderPass.draw(m_vertexCount, 1, 0, 0);
+		renderPass.setVertexBuffer(0, mVertexBuffers[i], 0, mVertexDatas[i].size() * sizeof(VertexAttributes)); // changed
+
+		// Set binding group
+		renderPass.setBindGroup(0, mBindGroup, 1, &dynamicOffset);
+
+		renderPass.draw(mIndexCounts[i], 1, 0, 0); // changed
+	}
 
 	// We add the GUI drawing commands to the render pass
 	updateGui(renderPass);
@@ -472,7 +486,6 @@ void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.
 		aiColor4D color;
 		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color);
 
-		std::cout << "color: " << color.r << "," << color.b << ", " << color.g << ", " << color.a << std::endl;
 		for(std::uint32_t faceIdx = 0u; faceIdx < mesh->mNumFaces; ++faceIdx){
 			//Put the vertices in the format the webgpu/rendering pipelin is looking for
 			for(int i = 0; i < 3; ++i){
@@ -512,29 +525,39 @@ void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.
 					<< " Is Too Large For Buffer Of Size " << MAX_BUFFER_SIZE << std::endl;
 		throw std::runtime_error("Could not load geometry! Mesh Too Large");
 	}
+
+	initVertexBuffer();
+}
+
+void Application::initVertexBuffer(){
+	// Create vertex buffer
+	BufferDescriptor bufferDesc;
+	bufferDesc.size = mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(VertexAttributes); // changed
+	if(mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) > MAX_BUFFER_SIZE){
+		std::cerr 	<< "Could not load geometry! Mesh Of Size: " << mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(decltype(mVertexDatas[mVertexDatas.size() - 1][0])) 
+					<< " Is Too Large For Buffer Of Size " << MAX_BUFFER_SIZE << std::endl;
+		throw std::runtime_error("Could not load geometry! Mesh Too Large");
+	}
+	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
+	bufferDesc.mappedAtCreation = false;
+	mVertexBuffers.push_back(mDevice.createBuffer(bufferDesc));
+	mQueue.writeBuffer(mVertexBuffers[mVertexBuffers.size() - 1], 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size); // changed
+ 
+	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size())); // changed
 }
 
 bool Application::initGeometry() {
 	// Load mesh data from OBJ file
-	loadGeometry("Globe.obj", mDevice);
-
-	// Create vertex buffer
-	BufferDescriptor bufferDesc;
-	bufferDesc.size = mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(VertexAttributes);
-	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
-	bufferDesc.mappedAtCreation = false;
-	m_vertexBuffer = mDevice.createBuffer(bufferDesc);
-	mQueue.writeBuffer(m_vertexBuffer, 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size);
-
-	m_vertexCount = static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size());
+	
 
 	return m_vertexBuffer != nullptr;
 }
 
 void Application::terminateGeometry() {
-	m_vertexBuffer.destroy();
-	m_vertexBuffer.release();
-	m_vertexCount = 0;
+	for(auto buff : mVertexBuffers){
+		buff.destroy();
+		buff.release();
+	}
 }
 
 void Application::terminateUniforms() {
@@ -556,13 +579,13 @@ bool Application::initBindGroup() {
 	bindGroupDesc.layout = mBindGroupLayout;
 	bindGroupDesc.entryCount = (uint32_t)bindings.size();
 	bindGroupDesc.entries = bindings.data();
-	m_bindGroup = mDevice.createBindGroup(bindGroupDesc);
+	mBindGroup = mDevice.createBindGroup(bindGroupDesc);
 
-	return m_bindGroup != nullptr;
+	return mBindGroup != nullptr;
 }
 
 void Application::terminateBindGroup() {
-	m_bindGroup.release();
+	mBindGroup.release();
 }
 
 void Application::initUniforms(int index, const mat4x4& rotation){
