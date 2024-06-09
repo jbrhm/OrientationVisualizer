@@ -210,9 +210,17 @@ void Application::onFrame() {
 
 	}
 
+	// Determine which objects to render based on which mode we are in
+	std::vector<size_t> toRender;
+	if(isQuaternion || isSO3){
+		toRender = {0, 1};
+	}else if(isLieAlgebra){
+		toRender = {1, 2};
+	}
+
 	// Set binding group
 	uint32_t dynamicOffset = 0;
-	for(size_t i = 0; i < mVertexDatas.size(); ++i){
+	for(size_t i : toRender){
 		dynamicOffset = mUniformStride * mUniformIndices[i];
 
 		renderPass.setVertexBuffer(0, mVertexBuffers[i], 0, mVertexDatas[i].size() * sizeof(VertexAttributes)); // changed
