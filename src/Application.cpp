@@ -143,6 +143,7 @@ void Application::onFrame() {
 		// Depending on the desired operation
 		Eigen::Vector3d desired;
 		if(isSub){
+			// This is lhs * (rhs inverse) bc orthogonal matrices transposed are their own inverse
 			Eigen::Matrix3d composed = lhsSO3 * rhsSO3.transpose();
 			desired = LieAlgebra::logarithmicMap(composed);
 		}
@@ -836,7 +837,6 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 			ImGui::SetNextItemWidth(inputBoxSize);
 			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &i22); 
 		}else if(isLieAlgebra){
-			ImGui::Checkbox("Add: ", &isAdd);
 			ImGui::Checkbox("Subtract: ", &isSub);
 
 			// Left Hand Side SO3 Matrix
