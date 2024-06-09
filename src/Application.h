@@ -81,7 +81,7 @@ private:
 	void initSwapChain();
 	void terminateSwapChain();
 
-	bool initDepthBuffer();
+	void initDepthBuffer();
 	void terminateDepthBuffer();
 
 	bool initRenderPipeline();

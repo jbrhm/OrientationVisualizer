@@ -45,7 +45,7 @@ bool Application::onInit() {
 
 	initSwapChain();
 
-	if (!initDepthBuffer()) return false;
+	initDepthBuffer();
 	if (!initRenderPipeline()) return false;
 
 	loadGeometry("Globe.obj", 0);
@@ -204,8 +204,6 @@ void Application::onFrame() {
 
 		rotationGLM = glm::transpose(rotationGLM);
 		
-
-
 		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
 
 		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, rotation), &rotationGLM, sizeof(MyUniforms::rotation));
@@ -411,7 +409,7 @@ void Application::terminateSwapChain() {
 }
 
 
-bool Application::initDepthBuffer() {
+void Application::initDepthBuffer() {
 	// Create the depth texture
 	if constexpr (isDebug){
 		std::cout << "Depth Buffer..." << std::endl;
@@ -451,7 +449,6 @@ bool Application::initDepthBuffer() {
 	if constexpr (isDebug){
 		std::cout << "Depth Texture View: " << mDepthTextureView << std::endl;
 	}
-	return mDepthTextureView != nullptr;
 }
 
 void Application::terminateDepthBuffer() {
@@ -477,26 +474,30 @@ void Application::writeRotation(){
 }
 
 ShaderModule Application::loadShaderModule(const std::filesystem::path& path, Device device) {
-	std::ifstream file(path);
-	if (!file.is_open()) {
-		return nullptr;
+	std::ifstream file1(path);
+	if (!file1.is_open()) {
+		std::cerr << "Shader File View did not initialize properly!" << std::endl;
+		throw std::runtime_error("Shader File did not initialize");
 	}
-	file.seekg(0, std::ios::end);
-	size_t size = file.tellg();
-	std::string shaderSource(size, ' ');
-	file.seekg(0);
-	file.read(shaderSource.data(), size);
+	size_t filesize = 0;
+	while(file1.good()){
+		file1.get();
+		++filesize;
+	} 
+	std::string shaderSourceCode(filesize, ' ');
+	std::ifstream file2(path);
+	if (!file2.is_open()) {
+		std::cerr << "Shader File View did not initialize properly!" << std::endl;
+		throw std::runtime_error("Shader File did not initialize");
+	}
+	file2.read(shaderSourceCode.data(), filesize);
 
-	ShaderModuleWGSLDescriptor shaderCodeDesc;
-	shaderCodeDesc.chain.next = nullptr;
-	shaderCodeDesc.chain.sType = SType::ShaderModuleWGSLDescriptor;
-	shaderCodeDesc.code = shaderSource.c_str();
+	ShaderModuleWGSLDescriptor shaderModuleDesc;
+	shaderModuleDesc.chain.next = nullptr;
+	shaderModuleDesc.chain.sType = SType::ShaderModuleWGSLDescriptor;
+	shaderModuleDesc.code = shaderSourceCode.c_str();
 	ShaderModuleDescriptor shaderDesc;
-	shaderDesc.nextInChain = &shaderCodeDesc.chain;
-#ifdef WEBGPU_BACKEND_WGPU
-	shaderDesc.hintCount = 0;
-	shaderDesc.hints = nullptr;
-#endif
+	shaderDesc.nextInChain = &shaderModuleDesc.chain;
 
 	return device.createShaderModule(shaderDesc);
 }
