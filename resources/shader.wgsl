@@ -28,12 +28,12 @@ struct MyUniforms {
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
 	var worldRot: mat4x4f;
-	worldRot[0][0] = 0.0;
-	worldRot[0][1] = -1.0;
+	worldRot[0][0] = 1.0;
+	worldRot[0][1] = 0.0;
 	worldRot[0][2] = 0.0;
 	worldRot[0][3] = 0.0;
-	worldRot[1][0] = 1.0;
-	worldRot[1][1] = 0.0;
+	worldRot[1][0] = 0.0;
+	worldRot[1][1] = 1.0;
 	worldRot[1][2] = 0.0;
 	worldRot[1][3] = 0.0;
 	worldRot[2][0] = 0.0;

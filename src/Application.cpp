@@ -2,6 +2,7 @@
 #include <glfw3webgpu.h>
 #include <GLFW/glfw3.h>
 #include <glm/fwd.hpp>
+#include <glm/matrix.hpp>
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_LEFT_HANDED
@@ -32,6 +33,12 @@ constexpr float PI = 3.14159265358979323846f;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Public methods
+
+int getSign(double num){
+	if (num > 0) return 1;
+	if (num < 0) return -1;
+	return 0;
+}
 
 bool Application::onInit() {
 	if (!initWindowAndDevice()) return false;
@@ -126,7 +133,12 @@ void Application::onFrame() {
 		so3 << 	l100, l101, l102, 
 				l110, l111, l112,
 				l120, l121, l122;
-		Eigen::Vector3d v = LieAlgebra::logarithmicMap(so3);
+		
+		Eigen::Vector3d desired = LieAlgebra::logarithmicMap(so3);
+		Eigen::Vector3d v;
+		v.x() = desired.x();
+		v.y() = -1 * desired.y();
+		v.z() = desired.z();
 		
 		Eigen::HouseholderQR<Eigen::Matrix3d> qr;
 		Eigen::Matrix3d vectorMatrix;
@@ -136,13 +148,25 @@ void Application::onFrame() {
 		qr.compute(vectorMatrix);
 
 		Eigen::Matrix3d reorderMatrix = Eigen::Matrix3d::Zero();
-		reorderMatrix(0, 2) = 1;
-		reorderMatrix(1, 0) = 1;
 		reorderMatrix(2, 1) = 1;
+		reorderMatrix(1, 0) = 1;
+		reorderMatrix(0, 2) = 1;
 
-		Eigen::Matrix3d rotation = reorderMatrix * qr.householderQ();
+		Eigen::Matrix3d rotation = qr.householderQ() * reorderMatrix;
 
-		std::cout << v << std::endl;
+		// Make sure the signs of the vectors have not been changed by QR decomp
+		if(getSign(rotation.coeff(0,2)) != getSign(v.coeff(0,0))){
+			rotation(0,2) *= -1;
+			rotation(1,2) *= -1;
+			rotation(2,2) *= -1;
+			rotation(0,1) *= -1;
+			rotation(1,1) *= -1;
+			rotation(2,1) *= -1;
+		}
+
+		std::cout << "Vector:\n" << desired << std::endl;
+
+		std::cout << "Rotation:\n" << rotation << std::endl;
 
 		mZScalar = 1.0;//v.norm();
 
@@ -162,6 +186,9 @@ void Application::onFrame() {
 		rotationGLM[3][1] = 0;
 		rotationGLM[3][2] = 0;
 		rotationGLM[3][3] = 1;
+
+		rotationGLM = glm::transpose(rotationGLM);
+		
 
 
 		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
@@ -575,13 +602,13 @@ void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.
 
 				mVertexDatas[mVertexDatas.size() - 1][index].position = {
 					vertex.x,
-					-vertex.z,
+					vertex.z,
 					vertex.y
 				};
 
 				mVertexDatas[mVertexDatas.size() - 1][index].normal = {
 					normal.x,
-					-normal.z,
+					normal.z,
 					normal.y
 				};
 
