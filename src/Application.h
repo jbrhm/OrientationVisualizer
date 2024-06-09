@@ -78,7 +78,7 @@ private:
 	void initQueue();
 	void terminateQueue();
 
-	bool initSwapChain();
+	void initSwapChain();
 	void terminateSwapChain();
 
 	bool initDepthBuffer();
@@ -142,7 +142,7 @@ private:
 	std::unique_ptr<wgpu::ErrorCallback> mErrorCallback;
 
 	// Swap Chain
-	wgpu::SwapChain m_swapChain = nullptr;
+	wgpu::SwapChain mSwapChain = nullptr;
 
 	// Depth Buffer
 	wgpu::Texture m_depthTexture = nullptr;

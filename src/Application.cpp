@@ -43,7 +43,7 @@ bool Application::onInit() {
 
 	initQueue();
 
-	if (!initSwapChain()) return false;
+	initSwapChain();
 	if (!initDepthBuffer()) return false;
 	if (!initRenderPipeline()) return false;
 
@@ -75,7 +75,7 @@ bool Application::onInit() {
 
 void Application::onFrame() {
 	glfwPollEvents();
-	TextureView nextTexture = m_swapChain.getCurrentTextureView();
+	TextureView nextTexture = mSwapChain.getCurrentTextureView();
 	if (!nextTexture) {
 		std::cerr << "Cannot acquire next swap chain texture" << std::endl;
 		return;
@@ -249,7 +249,7 @@ void Application::onFrame() {
 	mQueue.submit(command);
 	command.release();
 
-	m_swapChain.present();
+	mSwapChain.present();
 
 #ifdef WEBGPU_BACKEND_DAWN
 	// Check for pending error callbacks
@@ -370,6 +370,10 @@ void Application::initQueue(){
 		std::cout << "Initializing Queue..." << std::endl;
 	}
 	mQueue = mDevice.getQueue();
+	if (!mQueue) {
+		std::cerr << "Queue did not initialize properly!" << std::endl;
+		throw std::runtime_error("Queue did not initialize properly!");
+	}
 	if constexpr (isDebug){
 		std::cout << "Queue: " << mQueue << std::endl;
 	}
@@ -380,25 +384,29 @@ void Application::terminateQueue(){
 }
 
 
-bool Application::initSwapChain() {
+void Application::initSwapChain() {
 	// Get the current size of the window's framebuffer:
-	int width, height;
-	glfwGetFramebufferSize(mWindow, &width, &height);
-
-	std::cout << "Creating swapchain..." << std::endl;
+	if constexpr (isDebug){
+		std::cout << "Initializing Swap Chain..." << std::endl;
+	}	
 	SwapChainDescriptor swapChainDesc;
-	swapChainDesc.width = static_cast<uint32_t>(width);
-	swapChainDesc.height = static_cast<uint32_t>(height);
+	swapChainDesc.width = static_cast<uint32_t>(WINDOW_WIDTH);
+	swapChainDesc.height = static_cast<uint32_t>(WINDOW_HEIGHT);
 	swapChainDesc.usage = TextureUsage::RenderAttachment;
 	swapChainDesc.format = mSwapChainFormat;
-	swapChainDesc.presentMode = PresentMode::Fifo;
-	m_swapChain = mDevice.createSwapChain(mSurface, swapChainDesc);
-	std::cout << "Swapchain: " << m_swapChain << std::endl;
-	return m_swapChain != nullptr;
+	swapChainDesc.presentMode = PresentMode::Immediate;
+	mSwapChain = mDevice.createSwapChain(mSurface, swapChainDesc);
+	if (!mSwapChain) {
+		std::cerr << "Swap Chain did not initialize properly!" << std::endl;
+		throw std::runtime_error("Swap Chain did not initialize properly!");
+	}
+	if constexpr (isDebug){
+		std::cout << "Swap Chain: " << mSwapChain << std::endl;
+	}
 }
 
 void Application::terminateSwapChain() {
-	m_swapChain.release();
+	mSwapChain.release();
 }
 
 
