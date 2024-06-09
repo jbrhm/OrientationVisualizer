@@ -169,9 +169,20 @@ private:
 	double i20 = 0, i21 = 0, i22 = 1;
 
 	bool isLieAlgebra = false;
+	
+	// Lie Algebra Operation
+	bool isAdd = false;
+	bool isSub = true;
+
+	// Left hand side SO3 matrix
 	double l100 = 1, l101 = 0, l102 = 0;
 	double l110 = 0, l111 = 1, l112 = 0;
 	double l120 = 0, l121 = 0, l122 = 1;
+
+	// Right hand side SO3 matrix
+	double r100 = 1, r101 = 0, r102 = 0;
+	double r110 = 0, r111 = 1, r112 = 0;
+	double r120 = 0, r121 = 0, r122 = 1;
 
 	float mZScalar = 1.0f;
 	glm::mat4x4 rotationGLM;

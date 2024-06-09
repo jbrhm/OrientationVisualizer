@@ -128,13 +128,25 @@ void Application::onFrame() {
 		mUniforms.modelMatrix = R1 * T1 * S;
 		mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
 	}else if(isLieAlgebra){
-		// TODO: Make sure that this actually valid for sin(theta) = 0
-		Eigen::Matrix3d so3;
-		so3 << 	l100, l101, l102, 
-				l110, l111, l112,
-				l120, l121, l122;
+		// Left hand side matrix
+		Eigen::Matrix3d lhsSO3;
+		lhsSO3 << 	l100, l101, l102, 
+					l110, l111, l112,
+					l120, l121, l122;
+
+		// Right hand side matrix
+		Eigen::Matrix3d rhsSO3;
+		rhsSO3 << 	r100, r101, r102, 
+					r110, r111, r112,
+					r120, r121, r122;
+
+		// Depending on the desired operation
+		Eigen::Vector3d desired;
+		if(isSub){
+			Eigen::Matrix3d composed = lhsSO3 * rhsSO3.transpose();
+			desired = LieAlgebra::logarithmicMap(composed);
+		}
 		
-		Eigen::Vector3d desired = LieAlgebra::logarithmicMap(so3);
 		Eigen::Vector3d v;
 		v.x() = desired.x();
 		v.y() = -1 * desired.y();
@@ -168,7 +180,7 @@ void Application::onFrame() {
 
 		std::cout << "Rotation:\n" << rotation << std::endl;
 
-		mZScalar = 1.0;//v.norm();
+		mZScalar = v.norm();
 
 		rotationGLM[0][0] = rotation.coeff(0,0);
 		rotationGLM[0][1] = rotation.coeff(0,1);
@@ -824,37 +836,72 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 			ImGui::SetNextItemWidth(inputBoxSize);
 			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &i22); 
 		}else if(isLieAlgebra){
-			ImGui::Text("SO3 Matrix:");
+			ImGui::Checkbox("Add: ", &isAdd);
+			ImGui::Checkbox("Subtract: ", &isSub);
 
+			// Left Hand Side SO3 Matrix
+			ImGui::Text("SO3 Matrix Left Hand Side:");
 			// Row 1
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(0,0)", IMGUI_DOUBLE_SCALAR, &l100); 
+			ImGui::InputScalar("l(0,0)", IMGUI_DOUBLE_SCALAR, &l100); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(0,1)", IMGUI_DOUBLE_SCALAR, &l101); 
+			ImGui::InputScalar("l(0,1)", IMGUI_DOUBLE_SCALAR, &l101); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(0,2)", IMGUI_DOUBLE_SCALAR, &l102); 
+			ImGui::InputScalar("l(0,2)", IMGUI_DOUBLE_SCALAR, &l102); 
 			
 			// Row 2
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(1,0)", IMGUI_DOUBLE_SCALAR, &l110); 
+			ImGui::InputScalar("l(1,0)", IMGUI_DOUBLE_SCALAR, &l110); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(1,1)", IMGUI_DOUBLE_SCALAR, &l111); 
+			ImGui::InputScalar("l(1,1)", IMGUI_DOUBLE_SCALAR, &l111); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(1,2)", IMGUI_DOUBLE_SCALAR, &l112); 
+			ImGui::InputScalar("l(1,2)", IMGUI_DOUBLE_SCALAR, &l112); 
 
 			// Row 2
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(2,0)", IMGUI_DOUBLE_SCALAR, &l120); 
+			ImGui::InputScalar("l(2,0)", IMGUI_DOUBLE_SCALAR, &l120); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(2,1)", IMGUI_DOUBLE_SCALAR, &l121); 
+			ImGui::InputScalar("l(2,1)", IMGUI_DOUBLE_SCALAR, &l121); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &l122); 
+			ImGui::InputScalar("l(2,2)", IMGUI_DOUBLE_SCALAR, &l122); 
+
+			// RHS SO3 Matrix
+			ImGui::Text("SO3 Matrix Right Hand Side:");
+			// Row 1
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(0,0)", IMGUI_DOUBLE_SCALAR, &r100); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(0,1)", IMGUI_DOUBLE_SCALAR, &r101); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(0,2)", IMGUI_DOUBLE_SCALAR, &r102); 
+			
+			// Row 2
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(1,0)", IMGUI_DOUBLE_SCALAR, &r110); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(1,1)", IMGUI_DOUBLE_SCALAR, &r111); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(1,2)", IMGUI_DOUBLE_SCALAR, &r112); 
+
+			// Row 2
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(2,0)", IMGUI_DOUBLE_SCALAR, &r120); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(2,1)", IMGUI_DOUBLE_SCALAR, &r121); 
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(inputBoxSize);
+			ImGui::InputScalar("r(2,2) ", IMGUI_DOUBLE_SCALAR, &r122); 
 		}
 		
 		// Display the refresh rate
