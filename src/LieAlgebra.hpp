@@ -21,8 +21,13 @@ public:
         double theta = acos((trace(SO3) - 1) / 2);
 
         // This if statement prevents unguarded division for when sin(theta) = 0
-        if(equals(sin(theta), 0)){
+        if(equals(theta, 0)){
             return Eigen::Vector3d(0, 0, 0);
+        }else if(equals(sin(theta), 0)){
+            double wx = M_PI * sqrt((1.0/2.0) * (SO3.coeff(0,0) + 1));
+            double wy = M_PI * sqrt((1.0/2.0) * (SO3.coeff(1,1) + 1));
+            double wz = M_PI * sqrt((1.0/2.0) * (SO3.coeff(2,2) + 1));
+            return Eigen::Vector3d(wx, wy, wz);
         }else{
             Eigen::Matrix3d wx = (theta / (2 * sin(theta))) * (SO3 - SO3.transpose());
             return Eigen::Vector3d(wx.coeff(2,1), wx.coeff(0,2), wx.coeff(1,0));
