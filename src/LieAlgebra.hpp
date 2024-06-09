@@ -1,6 +1,7 @@
 #pragma once
 #include <Eigen/Core>
 #include <math.h>
+#include "utils.hpp"
 
 class LieAlgebra {
 private:
@@ -24,9 +25,9 @@ public:
         if(equals(theta, 0)){
             return Eigen::Vector3d(0, 0, 0);
         }else if(equals(sin(theta), 0)){
-            double wx = M_PI * sqrt((1.0/2.0) * (SO3.coeff(0,0) + 1));
-            double wy = M_PI * sqrt((1.0/2.0) * (SO3.coeff(1,1) + 1));
-            double wz = M_PI * sqrt((1.0/2.0) * (SO3.coeff(2,2) + 1));
+            double wx = getSign(SO3.coeff(1,2)) * M_PI * sqrt((1.0/2.0) * (SO3.coeff(0,0) + 1));
+            double wy = -1 * getSign(SO3.coeff(0,2)) * M_PI * sqrt((1.0/2.0) * (SO3.coeff(1,1) + 1));
+            double wz = -1 * getSign(SO3.coeff(1,0)) * M_PI * sqrt((1.0/2.0) * (SO3.coeff(2,2) + 1));
             return Eigen::Vector3d(wx, wy, wz);
         }else{
             Eigen::Matrix3d wx = (theta / (2 * sin(theta))) * (SO3 - SO3.transpose());

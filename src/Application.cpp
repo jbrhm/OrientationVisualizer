@@ -16,6 +16,7 @@
 #include <Eigen/Core>
 #include <Eigen/QR>
 #include "LieAlgebra.hpp"
+#include "utils.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -33,12 +34,6 @@ constexpr float PI = 3.14159265358979323846f;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Public methods
-
-int getSign(double num){
-	if (num > 0) return 1;
-	if (num < 0) return -1;
-	return 0;
-}
 
 bool Application::onInit() {
 	if (!initWindowAndDevice()) return false;
@@ -168,7 +163,7 @@ void Application::onFrame() {
 		Eigen::Matrix3d rotation = qr.householderQ() * reorderMatrix;
 
 		// Make sure the signs of the vectors have not been changed by QR decomp
-		if(getSign(rotation.coeff(0,2)) != getSign(v.coeff(0,0))){
+		if(getSign(rotation.coeff(0,2)) != getSign(v.coeff(0,0)) || getSign(rotation.coeff(1,2)) != getSign(v.coeff(1,0)) || getSign(rotation.coeff(2,2)) != getSign(v.coeff(2,0))){
 			rotation(0,2) *= -1;
 			rotation(1,2) *= -1;
 			rotation(2,2) *= -1;
