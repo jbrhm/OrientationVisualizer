@@ -1,23 +1,54 @@
 #pragma once
 
+// STL
 #include <filesystem>
-#include <webgpu/webgpu.hpp>
-#include <glm/glm.hpp> // all types inspired from GLSL
-#include <glm/ext.hpp>
 #include <fstream>
+#include <iostream>
+#include <cassert>
+#include <sstream>
+#include <string>
+#include <array>
+
+// WEBGPU
+#include <webgpu/webgpu.hpp>
+
+// GLFW3WEBGPU
+#include <glfw3webgpu.h>
+
+// GLM
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/fwd.hpp>
+#include <glm/matrix.hpp>
+
+// ASSIMP
 #include <assimp-3.3.1/include/assimp/Importer.hpp>
 #include <assimp-3.3.1/include/assimp/cimport.h>
 #include <assimp-3.3.1/include/assimp/postprocess.h>
 #include <assimp-3.3.1/include/assimp/scene.h>
 #include <assimp-3.3.1/include/assimp/material.h>
 
+// IMGUI
+#include <imgui.h>
+#include <backends/imgui_impl_wgpu.h>
+#include <backends/imgui_impl_glfw.h>
+
+// EIGEN
+#include <Eigen/Core>
+#include <Eigen/QR>
+
+// Codebase
+#include "LieAlgebra.hpp"
+#include "utils.hpp"
+#include "GLFW.hpp"
+
 // Forward declare
 struct GLFWwindow;
 
 class Application {
 public:
-
-
 	// A function called only once at the beginning. Returns false is init failed.
 	bool onInit();
 
@@ -97,7 +128,7 @@ private:
     };  
 
 	// Window and Device
-	GLFWwindow* m_window = nullptr;
+	GLFW::WindowPtr mWindow = nullptr;
 	wgpu::Instance mInstance = nullptr;
 	wgpu::Surface m_surface = nullptr;
 	wgpu::Device mDevice = nullptr;

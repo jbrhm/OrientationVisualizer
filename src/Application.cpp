@@ -1,29 +1,4 @@
 #include "Application.h"
-#include <glfw3webgpu.h>
-#include <GLFW/glfw3.h>
-#include <glm/fwd.hpp>
-#include <glm/matrix.hpp>
-
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_FORCE_LEFT_HANDED
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
-
-#include <imgui.h>
-#include <backends/imgui_impl_wgpu.h>
-#include <backends/imgui_impl_glfw.h>
-
-#include <Eigen/Core>
-#include <Eigen/QR>
-#include "LieAlgebra.hpp"
-#include "utils.hpp"
-
-#include <iostream>
-#include <cassert>
-#include <filesystem>
-#include <sstream>
-#include <string>
-#include <array>
 
 using namespace wgpu;
 using glm::mat4x4;
@@ -31,11 +6,16 @@ using glm::vec4;
 using glm::vec3;
 
 constexpr float PI = 3.14159265358979323846f;
-
+#ifdef DEBUG 
+	constexpr bool isDebug = true;
+#else
+	constexpr bool isDebug = false;
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Public methods
 
 bool Application::onInit() {
+	std::cout << isDebug;
 	if (!initWindowAndDevice()) return false;
 	if (!initSwapChain()) return false;
 	if (!initDepthBuffer()) return false;
@@ -263,7 +243,7 @@ void Application::onFinish() {
 }
 
 bool Application::isRunning() {
-	return !glfwWindowShouldClose(m_window);
+	return !glfwWindowShouldClose(mWindow);
 }
 
 void Application::onResize() {
@@ -281,27 +261,22 @@ void Application::onResize() {
 // Private methods
 
 bool Application::initWindowAndDevice() {
+	// Create WebGPU instance
 	mInstance = createInstance(InstanceDescriptor{});
 	if (!mInstance) {
 		std::cerr << "WebGPU did not initialize properly!" << std::endl;
 		throw std::runtime_error("WebGPU did not initialize properly!");
 	}
 
-	if (!glfwInit()) {
-		std::cerr << "GLFW did not initialize properly!" << std::endl;
-		throw std::runtime_error("GLFW did not initialize properly!");
-	}
+	// Initialize GLFW
+	std::vector<std::pair<int, int>> args {{GLFW_CLIENT_API, GLFW_NO_API},{GLFW_RESIZABLE, GLFW_FALSE}};
+	GLFW::init(args);
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Learn WebGPU", NULL, NULL);
-	if (!m_window) {
-		std::cerr << "Could not open window!" << std::endl;
-		return false;
-	}
-
+	//Create window
+	mWindow = GLFW::createWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Orientation Visualizer");
+	
 	std::cout << "Requesting adapter..." << std::endl;
-	m_surface = glfwGetWGPUSurface(mInstance, m_window);
+	m_surface = glfwGetWGPUSurface(mInstance, mWindow);
 	RequestAdapterOptions adapterOpts{};
 	adapterOpts.compatibleSurface = m_surface;
 	Adapter adapter = mInstance.requestAdapter(adapterOpts);
@@ -355,16 +330,14 @@ void Application::terminateWindowAndDevice() {
 	mDevice.release();
 	m_surface.release();
 	mInstance.release();
-
-	glfwDestroyWindow(m_window);
-	glfwTerminate();
+	GLFW::terminate();	
 }
 
 
 bool Application::initSwapChain() {
 	// Get the current size of the window's framebuffer:
 	int width, height;
-	glfwGetFramebufferSize(m_window, &width, &height);
+	glfwGetFramebufferSize(mWindow, &width, &height);
 
 	std::cout << "Creating swapchain..." << std::endl;
 	SwapChainDescriptor swapChainDesc;
@@ -386,7 +359,7 @@ void Application::terminateSwapChain() {
 bool Application::initDepthBuffer() {
 	// Get the current size of the window's framebuffer:
 	int width, height;
-	glfwGetFramebufferSize(m_window, &width, &height);
+	glfwGetFramebufferSize(mWindow, &width, &height);
 
 	// Create the depth texture
 	TextureDescriptor depthTextureDesc;
@@ -759,7 +732,7 @@ bool Application::initGui() {
 	ImGui::GetIO();
 
 	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForOther(m_window, true);
+	ImGui_ImplGlfw_InitForOther(mWindow, true);
 	ImGui_ImplWGPU_InitInfo initInfo;
 	initInfo.DepthStencilFormat = mDepthTextureFormat;
 	initInfo.RenderTargetFormat = mSwapChainFormat;

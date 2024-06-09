@@ -23,7 +23,16 @@ add_executable(App
 	${srcs}
 )
 
-message(${srcs})
+# Build Configurations
+set(isDEBUG TRUE)
+if(isDEBUG)
+	target_compile_options(App PRIVATE -g3)
+	target_compile_definitions(App PRIVATE
+		DEBUG="ON"
+	)
+else()
+	target_compile_options(App PRIVATE -O3)
+endif()
 
 if(DEV_MODE)
 	# In dev mode, we load resources from the source tree, so that when we
