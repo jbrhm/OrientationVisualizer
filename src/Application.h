@@ -84,7 +84,7 @@ private:
 	void initDepthBuffer();
 	void terminateDepthBuffer();
 
-	bool initRenderPipeline();
+	void initRenderPipeline();
 	void terminateRenderPipeline();
 
 	bool initTexture();
@@ -149,8 +149,8 @@ private:
 	wgpu::TextureView mDepthTextureView = nullptr;
 
 	// Render Pipeline
-	wgpu::ShaderModule m_shaderModule = nullptr;
-	wgpu::RenderPipeline m_pipeline = nullptr;
+	wgpu::ShaderModule mShaderModule = nullptr;
+	wgpu::RenderPipeline mRenderPipeline = nullptr;
 
 	// Texture
 	wgpu::Sampler m_sampler = nullptr;

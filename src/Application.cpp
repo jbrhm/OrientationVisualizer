@@ -46,7 +46,7 @@ bool Application::onInit() {
 	initSwapChain();
 
 	initDepthBuffer();
-	if (!initRenderPipeline()) return false;
+	initRenderPipeline();
 
 	loadGeometry("Globe.obj", 0);
 
@@ -119,7 +119,7 @@ void Application::onFrame() {
 	renderPassDesc.timestampWrites = nullptr;
 	RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
 
-	renderPass.setPipeline(m_pipeline);
+	renderPass.setPipeline(mRenderPipeline);
 
 	// State Machine For Rendering different meshes depending on which mode the user has chosen
 	if(isQuaternion || isSO3){
@@ -424,7 +424,6 @@ void Application::initDepthBuffer() {
 	depthTextureDesc.viewFormatCount = 1;
 	depthTextureDesc.viewFormats = (WGPUTextureFormat*)&mDepthTextureFormat;
 	mDepthTexture = mDevice.createTexture(depthTextureDesc);
-	std::cout << "Depth texture: " << mDepthTexture << std::endl;
 	if (!mDepthTexture) {
 		std::cerr << "Depth Texture did not initialize properly!" << std::endl;
 		throw std::runtime_error("Depth Texture did not initialize properly!");
@@ -507,58 +506,65 @@ ShaderModule Application::loadShaderModule(const std::filesystem::path& path, De
 }
 
 
-bool Application::initRenderPipeline() {
-	std::cout << "Creating shader module..." << std::endl;
-	m_shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", mDevice);
-	std::cout << "Shader module: " << m_shaderModule << std::endl;
-
-	std::cout << "Creating render pipeline..." << std::endl;
+void Application::initRenderPipeline() {
+	// Load the shader module
+	if constexpr (isDebug){
+		std::cout << "Shader Module..." << std::endl;
+	}		
+	mShaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", mDevice);
+	if constexpr (isDebug){
+		std::cout << "Shader Module: " << mShaderModule << std::endl;
+	}
+	if constexpr (isDebug){
+		std::cout << "Render Pipeline..." << std::endl;
+	}	
 	RenderPipelineDescriptor pipelineDesc;
 
-	// Vertex fetch
-	std::vector<VertexAttribute> vertexAttribs(3);
+	// Describe the attirbutes that the vertices will have
+	std::vector<VertexAttribute> vertexAttributes(3);
 
-	// Position attribute
-	vertexAttribs[0].shaderLocation = 0;
-	vertexAttribs[0].format = VertexFormat::Float32x3;
-	vertexAttribs[0].offset = 0;
+	// Position
+	vertexAttributes[0].shaderLocation = 0;
+	vertexAttributes[0].format = VertexFormat::Float32x3;
+	vertexAttributes[0].offset = 0;
 
-	// Normal attribute
-	vertexAttribs[1].shaderLocation = 1;
-	vertexAttribs[1].format = VertexFormat::Float32x3;
-	vertexAttribs[1].offset = offsetof(VertexAttributes, normal);
+	// Normal
+	vertexAttributes[1].shaderLocation = 1;
+	vertexAttributes[1].format = VertexFormat::Float32x3;
+	vertexAttributes[1].offset = offsetof(VertexAttributes, normal);
 
-	// Color attribute
-	vertexAttribs[2].shaderLocation = 2;
-	vertexAttribs[2].format = VertexFormat::Float32x3;
-	vertexAttribs[2].offset = offsetof(VertexAttributes, color);
+	// Color
+	vertexAttributes[2].shaderLocation = 2;
+	vertexAttributes[2].format = VertexFormat::Float32x3;
+	vertexAttributes[2].offset = offsetof(VertexAttributes, color);
 
 	VertexBufferLayout vertexBufferLayout;
-	vertexBufferLayout.attributeCount = (uint32_t)vertexAttribs.size();
-	vertexBufferLayout.attributes = vertexAttribs.data();
+	vertexBufferLayout.attributeCount = static_cast<uint32_t>(vertexAttributes.size());
+	vertexBufferLayout.attributes = vertexAttributes.data();
 	vertexBufferLayout.arrayStride = sizeof(VertexAttributes);
 	vertexBufferLayout.stepMode = VertexStepMode::Vertex;
 
-	pipelineDesc.vertex.bufferCount = 1;
+	pipelineDesc.vertex.bufferCount = 1; // Since I'm just using one buffer with offsets this stays at 1
 	pipelineDesc.vertex.buffers = &vertexBufferLayout;
 
-	pipelineDesc.vertex.module = m_shaderModule;
-	pipelineDesc.vertex.entryPoint = "vs_main";
+	pipelineDesc.vertex.module = mShaderModule;
+	pipelineDesc.vertex.entryPoint = "vs_main"; // This is the function it will run from the shader module to process vertices
 	pipelineDesc.vertex.constantCount = 0;
 	pipelineDesc.vertex.constants = nullptr;
 
 	pipelineDesc.primitive.topology = PrimitiveTopology::TriangleList;
 	pipelineDesc.primitive.stripIndexFormat = IndexFormat::Undefined;
-	pipelineDesc.primitive.frontFace = FrontFace::CCW;
+	pipelineDesc.primitive.frontFace = FrontFace::CCW; // Going around the triangle counter clockwise will tell which is the front face
 	pipelineDesc.primitive.cullMode = CullMode::None;
 
 	FragmentState fragmentState;
 	pipelineDesc.fragment = &fragmentState;
-	fragmentState.module = m_shaderModule;
-	fragmentState.entryPoint = "fs_main";
+	fragmentState.module = mShaderModule;
+	fragmentState.entryPoint = "fs_main"; // This is the function it will run from the shader module to process fragments from the vertex sahder
 	fragmentState.constantCount = 0;
 	fragmentState.constants = nullptr;
 
+	// Outline how the pipeline should deal with colors
 	BlendState blendState;
 	blendState.color.srcFactor = BlendFactor::SrcAlpha;
 	blendState.color.dstFactor = BlendFactor::OneMinusSrcAlpha;
@@ -594,7 +600,6 @@ bool Application::initRenderPipeline() {
 	mBindingLayout.visibility = ShaderStage::Vertex | ShaderStage::Fragment;
 	mBindingLayout.buffer.type = BufferBindingType::Uniform;
 	mBindingLayout.buffer.minBindingSize = sizeof(MyUniforms);
-	// Dynamic offsets allow the render pipeline to use different parts of the buffer on different draws 
 	mBindingLayout.buffer.hasDynamicOffset = true;
 
 	// Create a bind group layout
@@ -610,15 +615,15 @@ bool Application::initRenderPipeline() {
 	PipelineLayout layout = mDevice.createPipelineLayout(layoutDesc);
 	pipelineDesc.layout = layout;
 
-	m_pipeline = mDevice.createRenderPipeline(pipelineDesc);
-	std::cout << "Render pipeline: " << m_pipeline << std::endl;
-
-	return m_pipeline != nullptr;
+	mRenderPipeline = mDevice.createRenderPipeline(pipelineDesc);
+	if constexpr (isDebug){
+		std::cout << "Shader Module: " << mRenderPipeline << std::endl;
+	}
 }
 
 void Application::terminateRenderPipeline() {
-	m_pipeline.release();
-	m_shaderModule.release();
+	mRenderPipeline.release();
+	mShaderModule.release();
 	mBindGroupLayout.release();
 }
 
