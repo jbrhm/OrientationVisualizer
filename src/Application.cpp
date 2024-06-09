@@ -5,13 +5,6 @@ using glm::mat4x4;
 using glm::vec4;
 using glm::vec3;
 
-constexpr float PI = 3.14159265358979323846f;
-
-#ifdef DEBUG 
-	constexpr bool isDebug = true;
-#else
-	constexpr bool isDebug = false;
-#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Public methods
 Application::Application(){
@@ -73,7 +66,8 @@ bool Application::onInit() {
 															0, 0, 0, 1)));
 	initBindGroup();
 
-	if (!initGui()) return false;
+	initGui();
+
 	return true;
 }
 
@@ -819,173 +813,4 @@ void Application::initUniformBuffer(){
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
 	bufferDesc.mappedAtCreation = false;
 	mUniformBuffer = mDevice.createBuffer(bufferDesc);
-}
-
-bool Application::initGui() {
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::GetIO();
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForOther(mWindow, true);
-	ImGui_ImplWGPU_InitInfo initInfo;
-	initInfo.DepthStencilFormat = mDepthTextureFormat;
-	initInfo.RenderTargetFormat = mSwapChainFormat;
-	initInfo.Device = mDevice;
-	initInfo.NumFramesInFlight = 3;
-	ImGui_ImplWGPU_Init(&initInfo);
-
-	// Adjust font
-	ImGuiIO& io = ImGui::GetIO();
-	io.FontGlobalScale = imguiScale;
-	return true;
-}
-
-void Application::terminateGui() {
-	ImGui_ImplGlfw_Shutdown();
-	ImGui_ImplWGPU_Shutdown();
-}
-
-void Application::updateGui(RenderPassEncoder renderPass) {
-	// Start the Dear ImGui frame
-	ImGui_ImplWGPU_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	// Build our UI
-	{
-		ImGui::Begin("Orientation Visualizer");                                // Create a window called "Hello, world!" and append into it.
-
-		ImGui::Text("Which input would you like?");                     // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Quaternion: ", &isQuaternion);            // Edit bools storing our window open/close state
-		ImGui::Checkbox("SO3: ", &isSO3);
-		ImGui::Checkbox("Lie Algebra: ", &isLieAlgebra);
-
-		// Decision tree for each of the different display states
-		if(isQuaternion){
-			ImGui::Text("Ex. 0, 0, 0, 1 is the identity quaternion");
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q0", IMGUI_DOUBLE_SCALAR, &q1); // Input type 9 is double
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q1", IMGUI_DOUBLE_SCALAR, &q2); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q2", IMGUI_DOUBLE_SCALAR, &q3); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q3", IMGUI_DOUBLE_SCALAR, &q0); 
-		}else if(isSO3){
-			ImGui::Text("SO3 Matrix:");
-
-			// Row 1
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(0,0)", IMGUI_DOUBLE_SCALAR, &i00); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(0,1)", IMGUI_DOUBLE_SCALAR, &i01); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(0,2)", IMGUI_DOUBLE_SCALAR, &i02); 
-			
-			// Row 2
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(1,0)", IMGUI_DOUBLE_SCALAR, &i10); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(1,1)", IMGUI_DOUBLE_SCALAR, &i11); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(1,2)", IMGUI_DOUBLE_SCALAR, &i12); 
-
-			// Row 2
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(2,0)", IMGUI_DOUBLE_SCALAR, &i20); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(2,1)", IMGUI_DOUBLE_SCALAR, &i21); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &i22); 
-		}else if(isLieAlgebra){
-			ImGui::Checkbox("Subtract: ", &isSub);
-
-			// Left Hand Side SO3 Matrix
-			ImGui::Text("SO3 Matrix Left Hand Side:");
-			// Row 1
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(0,0)", IMGUI_DOUBLE_SCALAR, &l100); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(0,1)", IMGUI_DOUBLE_SCALAR, &l101); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(0,2)", IMGUI_DOUBLE_SCALAR, &l102); 
-			
-			// Row 2
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(1,0)", IMGUI_DOUBLE_SCALAR, &l110); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(1,1)", IMGUI_DOUBLE_SCALAR, &l111); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(1,2)", IMGUI_DOUBLE_SCALAR, &l112); 
-
-			// Row 2
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(2,0)", IMGUI_DOUBLE_SCALAR, &l120); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(2,1)", IMGUI_DOUBLE_SCALAR, &l121); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("l(2,2)", IMGUI_DOUBLE_SCALAR, &l122); 
-
-			// RHS SO3 Matrix
-			ImGui::Text("SO3 Matrix Right Hand Side:");
-			// Row 1
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(0,0)", IMGUI_DOUBLE_SCALAR, &r100); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(0,1)", IMGUI_DOUBLE_SCALAR, &r101); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(0,2)", IMGUI_DOUBLE_SCALAR, &r102); 
-			
-			// Row 2
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(1,0)", IMGUI_DOUBLE_SCALAR, &r110); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(1,1)", IMGUI_DOUBLE_SCALAR, &r111); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(1,2)", IMGUI_DOUBLE_SCALAR, &r112); 
-
-			// Row 2
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(2,0)", IMGUI_DOUBLE_SCALAR, &r120); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(2,1)", IMGUI_DOUBLE_SCALAR, &r121); 
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("r(2,2) ", IMGUI_DOUBLE_SCALAR, &r122); 
-		}
-		
-		// Display the refresh rate
-		ImGuiIO& io = ImGui::GetIO();
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		ImGui::End();
-	}
-
-	// Draw the UI
-	ImGui::EndFrame();
-	// Convert the UI defined above into low-level drawing commands
-	ImGui::Render();
-	// Execute the low-level drawing commands on the WebGPU backend
-	ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), renderPass);
 }

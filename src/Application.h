@@ -44,7 +44,14 @@
 #include "utils.hpp"
 #include "GLFW.hpp"
 
-// Forward declare
+constexpr float PI = 3.14159265358979323846f;
+
+#ifdef DEBUG 
+	constexpr bool isDebug = true;
+#else
+	constexpr bool isDebug = false;
+#endif
+
 struct GLFWwindow;
 
 class Application {
@@ -100,9 +107,9 @@ private:
 	void updateViewMatrix();
 	void updateDragInertia();
 
-	bool initGui(); // called in onInit
-	void terminateGui(); // called in onFinish
-	void updateGui(wgpu::RenderPassEncoder renderPass); // called in onFrame
+	void initGui();
+	void terminateGui();
+	void updateGui(wgpu::RenderPassEncoder renderPass);
 
     wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
 
