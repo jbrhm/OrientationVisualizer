@@ -479,12 +479,16 @@ ShaderModule Application::loadShaderModule(const std::filesystem::path& path, De
 		std::cerr << "Shader File View did not initialize properly!" << std::endl;
 		throw std::runtime_error("Shader File did not initialize");
 	}
+	// Read in file
 	size_t filesize = 0;
 	while(file1.good()){
 		file1.get();
 		++filesize;
 	} 
-	std::string shaderSourceCode(filesize, ' ');
+
+	// Read in the file
+	std::string shaderSourceCode(filesize, '\0');
+
 	std::ifstream file2(path);
 	if (!file2.is_open()) {
 		std::cerr << "Shader File View did not initialize properly!" << std::endl;
