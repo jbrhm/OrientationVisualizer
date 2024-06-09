@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1...3.25)
 project(
-	LearnWebGPU
+	OrientationVisualizer
 	VERSION 0.1.0
 	LANGUAGES CXX C
 )
@@ -15,53 +15,41 @@ include(cmake/macros.cmake)
 
 set_source_directory(srcs src)
 
-# We add an option to enable different settings when developping the app than
-# when distributing it.
 option(DEV_MODE "Set up development helper settings" ON)
 
-add_executable(App
+add_executable(Viz
 	${srcs}
 )
 
 # Build Configurations
 set(isDEBUG TRUE)
 if(isDEBUG)
-	target_compile_options(App PRIVATE -g3)
-	target_compile_definitions(App PRIVATE
+	target_compile_options(Viz PRIVATE -g3)
+	target_compile_definitions(Viz PRIVATE
 		DEBUG="ON"
 	)
 else()
-	target_compile_options(App PRIVATE -O3)
+	target_compile_options(Viz PRIVATE -O3)
 endif()
 
-if(DEV_MODE)
-	# In dev mode, we load resources from the source tree, so that when we
-	# dynamically edit resources (like shaders), these are correctly
-	# versionned.
-	target_compile_definitions(App PRIVATE
-		RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
-	)
-else()
-	# In release mode, we just load resources relatively to wherever the
-	# executable is launched from, so that the binary is portable
-	target_compile_definitions(App PRIVATE
-		RESOURCE_DIR="./resources/"
-	)
-endif()
+# Define the resources directory
+target_compile_definitions(Viz PRIVATE
+	RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
+)
 
-target_include_directories(App PRIVATE .)
+target_include_directories(Viz PRIVATE .)
 
-target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu glm assimp imgui eigen)
+target_link_libraries(Viz PRIVATE glfw webgpu glfw3webgpu glm assimp imgui eigen)
 
-set_target_properties(App PROPERTIES
+set_target_properties(Viz PROPERTIES
 	CXX_STANDARD 17
 	VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_ON_ERROR=1"
 )
-target_treat_all_warnings_as_errors(App)
-target_copy_webgpu_binaries(App)
+target_treat_all_warnings_as_errors(Viz)
+target_copy_webgpu_binaries(Viz)
 
 # Ignore a warning that GLM requires to bypass
 if (MSVC)
 	# Disable warning C4201: nonstandard extension used: nameless struct/union
-	target_compile_options(App PUBLIC /wd4201)
+	target_compile_options(Viz PUBLIC /wd4201)
 endif (MSVC)
