@@ -8,14 +8,14 @@ using glm::vec3;
 ///////////////////////////////////////////////////////////////////////////////
 // Public methods
 Application::Application(){
-	onInit();
+	init();
 }
 
 Application::~Application(){
 	mInstance.release();
 }
 
-bool Application::onInit() {
+bool Application::init() {
 	// Create WebGPU instance
 	if constexpr (isDebug){
 		std::cout << "Initializing Instance..." << std::endl;
@@ -51,27 +51,16 @@ bool Application::onInit() {
 
 	initUniformBuffer();
 	
-	initUniforms(0, transpose(mat4x4(	 1, 0, 0, 0,
-															0,1, 0, 0,
-															0, 0, 1, 0,
-															0, 0, 0, 1)));
-	
-	initUniforms(1, transpose(mat4x4(	 0, 1, 0, 0,
-															0, 0, 1, 0,
-															1, 0, 0, 0,
-															0, 0, 0, 1)));
-	initUniforms(2, transpose(mat4x4(	 1, 0, 0, 0,
-															0, 1, 0, 0,
-															0, 0, 1, 0,
-															0, 0, 0, 1)));
+	adjustView(-0.25, 0.0,-2.0);
+
 	initBindGroup();
 
-	initGui();
+	initGUI();
 
 	return true;
 }
 
-void Application::onFrame() {
+void Application::updateFrame() {
 	glfwPollEvents();
 	TextureView nextTexture = mSwapChain.getCurrentTextureView();
 	if (!nextTexture) {
@@ -120,13 +109,15 @@ void Application::onFrame() {
 
 	// State Machine For Rendering different meshes depending on which mode the user has chosen
 	if(isQuaternion || isSO3){
+	adjustView(-0.25, 0.0,-2.0);
 		// Update uniform buffer
 		// Update view matrix
 		angle1 = static_cast<float>(glfwGetTime());
 		R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
 		mUniforms.modelMatrix = R1 * T1 * S;
-		mQueue.writeBuffer(mUniformBuffer, offsetof(MyUniforms, modelMatrix), &mUniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
+		mQueue.writeBuffer(mUniformBuffer, offsetof(Uniform, modelMatrix), &mUniforms.modelMatrix, sizeof(Uniform::modelMatrix));
 	}else if(isLieAlgebra){
+	adjustView(-1.0, 0.0,-7.0);
 		// Left hand side matrix
 		Eigen::Matrix3d lhsSO3;
 		lhsSO3 << 	l100, l101, l102, 
@@ -176,34 +167,16 @@ void Application::onFrame() {
 			rotation(2,1) *= -1;
 		}
 
-		std::cout << "Vector:\n" << desired << std::endl;
-
-		std::cout << "Rotation:\n" << rotation << std::endl;
-
 		mZScalar = v.norm();
 
-		rotationGLM[0][0] = rotation.coeff(0,0);
-		rotationGLM[0][1] = rotation.coeff(0,1);
-		rotationGLM[0][2] = rotation.coeff(0,2);
-		rotationGLM[0][3] = 0;
-		rotationGLM[1][0] = rotation.coeff(1,0);
-		rotationGLM[1][1] = rotation.coeff(1,1);
-		rotationGLM[1][2] = rotation.coeff(1,2);
-		rotationGLM[1][3] = 0;
-		rotationGLM[2][0] = rotation.coeff(2,0);
-		rotationGLM[2][1] = rotation.coeff(2,1);
-		rotationGLM[2][2] = rotation.coeff(2,2);
-		rotationGLM[2][3] = 0;
-		rotationGLM[3][0] = 0;
-		rotationGLM[3][1] = 0;
-		rotationGLM[3][2] = 0;
-		rotationGLM[3][3] = 1;
-
-		rotationGLM = glm::transpose(rotationGLM);
+		rotationGLM = glm::transpose(mat4x4(	rotation.coeff(0,0), rotation.coeff(0,1), rotation.coeff(0,2),    0,
+												rotation.coeff(1,0), rotation.coeff(1,1), rotation.coeff(1,2),  0,
+												rotation.coeff(2,0), rotation.coeff(2,1), rotation.coeff(2,2),  0,
+												0,                                0,                                0,                            1));
 		
-		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
+		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(Uniform, zScalar), &mZScalar, sizeof(Uniform::zScalar));
 
-		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, rotation), &rotationGLM, sizeof(MyUniforms::rotation));
+		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(Uniform, rotation), &rotationGLM, sizeof(Uniform::rotation));
 
 	}
 
@@ -229,7 +202,7 @@ void Application::onFrame() {
 	}
 
 	// We add the GUI drawing commands to the render pass
-	updateGui(renderPass);
+	updateGUI(renderPass);
 
 	writeRotation();
 
@@ -254,8 +227,8 @@ void Application::onFrame() {
 }
 
 // This function runs in the LIFO order like regular destructors
-void Application::onFinish() {
-	terminateGui();
+void Application::terminate() {
+	terminateGUI();
 	terminateBindGroup();
 	terminateUniforms();
 	terminateGeometry();
@@ -267,18 +240,8 @@ void Application::onFinish() {
 	terminateGLFW();
 }
 
-bool Application::isRunning() {
+bool Application::isOpen() {
 	return !glfwWindowShouldClose(mWindow);
-}
-
-void Application::onResize() {
-	// Terminate in reverse order
-	terminateDepthBuffer();
-	terminateSwapChain();
-
-	// Re-init
-	initSwapChain();
-	initDepthBuffer();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -329,7 +292,7 @@ void Application::initAdapterAndDevice() {
 	requiredLimits.limits.maxInterStageShaderComponents = 8;
 	requiredLimits.limits.maxBindGroups = 2;
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
-	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(MyUniforms);
+	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(Uniform);
 	requiredLimits.limits.maxTextureDimension1D = 2048;
 	requiredLimits.limits.maxTextureDimension2D = 2048;
 	requiredLimits.limits.maxTextureArrayLayers = 1;
@@ -466,7 +429,7 @@ void Application::writeRotation(){
 									0,   0,   0,   1));
 	}
 	
-	mQueue.writeBuffer(mUniformBuffer, mUniformStride + offsetof(MyUniforms, rotation), &SE3, sizeof(MyUniforms::rotation));
+	mQueue.writeBuffer(mUniformBuffer, mUniformStride + offsetof(Uniform, rotation), &SE3, sizeof(Uniform::rotation));
 }
 
 ShaderModule Application::loadShaderModule(const std::filesystem::path& path, Device device) {
@@ -596,7 +559,7 @@ void Application::initRenderPipeline() {
 	mBindingLayout.binding = 0;
 	mBindingLayout.visibility = ShaderStage::Vertex | ShaderStage::Fragment;
 	mBindingLayout.buffer.type = BufferBindingType::Uniform;
-	mBindingLayout.buffer.minBindingSize = sizeof(MyUniforms);
+	mBindingLayout.buffer.minBindingSize = sizeof(Uniform);
 	mBindingLayout.buffer.hasDynamicOffset = true;
 
 	// Create a bind group layout
@@ -747,7 +710,7 @@ void Application::initBindGroup() {
 	binding.binding = 0;
 	binding.buffer = mUniformBuffer;
 	binding.offset = 0;
-	binding.size = sizeof(MyUniforms);
+	binding.size = sizeof(Uniform);
 
 	BindGroupDescriptor bindGroupDesc;
 	bindGroupDesc.layout = mBindGroupLayout;
@@ -764,15 +727,15 @@ void Application::terminateBindGroup() {
 	mBindGroup.release();
 }
 
-void Application::initUniforms(int index, const mat4x4& rotation){
+void Application::initUniform(int index, const mat4x4& rotation, float x, float y, float z){
 	// View from which the 
-	vec3 focalPoint(-0.25, 0.0, -2.0);
+	vec3 focalPoint(x, y, z);
 
 	// Rotate the object
 	angle1 = 2.0f;
 
 	// Rotate the view point
-	angle2 = 3.0f * PI / 4.0f;
+	angle2 = 3.0f * M_PI / 4.0f;
 
 	S = glm::scale(mat4x4(1.0), vec3(0.3f));
 	T1 = mat4x4(1.0);
@@ -799,7 +762,7 @@ void Application::initUniforms(int index, const mat4x4& rotation){
 	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
 	mUniforms.rotation = rotation;
 
-	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(MyUniforms));
+	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(Uniform));
 }
 
 void Application::initUniformBuffer(){
@@ -808,9 +771,19 @@ void Application::initUniformBuffer(){
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
 	// Create uniform buffer
-	mUniformStride = std::ceil(static_cast<double>(sizeof(MyUniforms))/mSupportedLimits.limits.minUniformBufferOffsetAlignment) * mSupportedLimits.limits.minUniformBufferOffsetAlignment;
-	bufferDesc.size = (MAX_NUM_UNIFORMS - 1) * mUniformStride + sizeof(MyUniforms);
+	mUniformStride = std::ceil(static_cast<double>(sizeof(Uniform))/mSupportedLimits.limits.minUniformBufferOffsetAlignment) * mSupportedLimits.limits.minUniformBufferOffsetAlignment;
+	bufferDesc.size = (MAX_NUM_UNIFORMS - 1) * mUniformStride + sizeof(Uniform);
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
 	bufferDesc.mappedAtCreation = false;
 	mUniformBuffer = mDevice.createBuffer(bufferDesc);
+}
+
+void Application::adjustView(float x, float y, float z){
+	for(size_t i = 0; i < MAX_NUM_UNIFORMS; ++i){
+		initUniform(i, transpose(mat4x4(	 1, 0, 0, 0,
+																0,1, 0, 0,
+																0, 0, 1, 0,
+																0, 0, 0, 1)),x, y, z);
+	}
+	
 }

@@ -5,7 +5,7 @@ using glm::mat4x4;
 using glm::vec4;
 using glm::vec3;
 
-void Application::initGui() {
+void Application::initGUI() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::GetIO();
@@ -26,12 +26,12 @@ void Application::initGui() {
 	io.FontGlobalScale = imguiScale;
 }
 
-void Application::terminateGui() {
+void Application::terminateGUI() {
 	ImGui_ImplGlfw_Shutdown();
 	ImGui_ImplWGPU_Shutdown();
 }
 
-void Application::updateGui(RenderPassEncoder renderPass) {
+void Application::updateGUI(RenderPassEncoder renderPass) {
     // Grab next frams
 	ImGui_ImplWGPU_NewFrame();
 	ImGui_ImplGlfw_NewFrame();

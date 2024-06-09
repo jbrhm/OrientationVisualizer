@@ -7,11 +7,11 @@
 
 int main(int, char**) {
 	Application app;
-	
-	while (app.isRunning()) {
-		app.onFrame();
+
+	while (app.isOpen()) {
+		app.updateFrame();
 	}
 
-	app.onFinish();
+	app.terminate();
 	return 0;
 }
