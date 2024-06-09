@@ -94,7 +94,7 @@ private:
 
 	void terminateUniforms();
 
-	bool initBindGroup();
+	void initBindGroup();
 	void terminateBindGroup();
 
 	void updateViewMatrix();

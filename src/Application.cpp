@@ -6,6 +6,7 @@ using glm::vec4;
 using glm::vec3;
 
 constexpr float PI = 3.14159265358979323846f;
+
 #ifdef DEBUG 
 	constexpr bool isDebug = true;
 #else
@@ -46,6 +47,7 @@ bool Application::onInit() {
 	initSwapChain();
 
 	initDepthBuffer();
+
 	initRenderPipeline();
 
 	loadGeometry("Globe.obj", 0);
@@ -69,7 +71,8 @@ bool Application::onInit() {
 															0, 1, 0, 0,
 															0, 0, 1, 0,
 															0, 0, 0, 1)));
-	if (!initBindGroup()) return false;
+	initBindGroup();
+
 	if (!initGui()) return false;
 	return true;
 }
@@ -627,17 +630,23 @@ void Application::terminateRenderPipeline() {
 	mBindGroupLayout.release();
 }
 
-void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.obj"
+void Application::loadGeometry(const std::string& url, int uniformID){
+	if constexpr (isDebug){
+		std::cout << "Loading " << url << "..." << std::endl;
+	}	
+
+	// Make sure that we are in boudns on uniforms
 	if(uniformID > MAX_NUM_UNIFORMS){
 		std::cerr << "Could not load Mesh! UniformID Exceedes Buffer Size" << std::endl;
 		throw std::runtime_error("Could not load Mesh! Mesh Count Has Exceeded Buffer Size");
 	}
 
+	// Create a new vector for pushing back all of the vertices
 	mVertexDatas.push_back(std::vector<VertexAttributes>());
 	mUniformIndices.push_back(uniformID);
 
+	// Read in the scenes of meshes
 	Assimp::Importer MeshImporter;
-
 	const aiScene* scene = aiImportFile((std::string(RESOURCE_DIR) + url).c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
 
 	if(!scene){
@@ -645,12 +654,12 @@ void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.
 		throw std::runtime_error("Could not load scene!");
 	}
 
-	//Load all of the meshes
+	// Load all of the meshes
 	std::uint32_t index = 0;
 	for(std::uint32_t meshIdx = 0u; meshIdx < scene->mNumMeshes; ++meshIdx){
 		aiMesh* mesh = scene->mMeshes[meshIdx];
 
-		//Grab the color of the mesh
+		// Grab the color of the mesh
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 		aiColor4D color;
 		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color);
@@ -662,20 +671,24 @@ void Application::loadGeometry(const std::string& url, int uniformID){//"/Globe.
 				aiVector3D vertex = mesh->mVertices[vertIdx];
 				aiVector3D normal = mesh->mNormals[vertIdx];
 
+				// Create a new place to load all of the vertex attributes
 				mVertexDatas[mVertexDatas.size() - 1].push_back(VertexAttributes());
 
+				// Position
 				mVertexDatas[mVertexDatas.size() - 1][index].position = {
 					vertex.x,
 					vertex.z,
 					vertex.y
 				};
 
+				// Normal
 				mVertexDatas[mVertexDatas.size() - 1][index].normal = {
 					normal.x,
 					normal.z,
 					normal.y
 				};
 
+				// Color
 				mVertexDatas[mVertexDatas.size() - 1][index].color = {
 					color.r,
 					color.g,
@@ -710,9 +723,12 @@ void Application::initVertexBuffer(){
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
 	mVertexBuffers.push_back(mDevice.createBuffer(bufferDesc));
+
+	// Write all of the vertex data onto the new buffer
 	mQueue.writeBuffer(mVertexBuffers[mVertexBuffers.size() - 1], 0, mVertexDatas[mVertexDatas.size() - 1].data(), bufferDesc.size); // changed
  
-	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size())); // changed
+	// Push back the number of vertices in the vector
+	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size()));
 }
 
 void Application::terminateGeometry() {
@@ -728,22 +744,26 @@ void Application::terminateUniforms() {
 }
 
 
-bool Application::initBindGroup() {
+void Application::initBindGroup() {
 	// Create a binding
-	std::vector<BindGroupEntry> bindings(1);
-
-	bindings[0].binding = 0;
-	bindings[0].buffer = mUniformBuffer;
-	bindings[0].offset = 0;
-	bindings[0].size = sizeof(MyUniforms);
+	if constexpr (isDebug){
+		std::cout << "Bind Group..." << std::endl;
+	}	
+	BindGroupEntry binding;
+	binding.binding = 0;
+	binding.buffer = mUniformBuffer;
+	binding.offset = 0;
+	binding.size = sizeof(MyUniforms);
 
 	BindGroupDescriptor bindGroupDesc;
 	bindGroupDesc.layout = mBindGroupLayout;
-	bindGroupDesc.entryCount = (uint32_t)bindings.size();
-	bindGroupDesc.entries = bindings.data();
+	bindGroupDesc.entryCount = 1;
+	bindGroupDesc.entries = &binding;
 	mBindGroup = mDevice.createBindGroup(bindGroupDesc);
 
-	return mBindGroup != nullptr;
+	if constexpr (isDebug){
+		std::cout << "Bind Group: " << mBindGroup << std::endl;
+	}	
 }
 
 void Application::terminateBindGroup() {
@@ -751,12 +771,12 @@ void Application::terminateBindGroup() {
 }
 
 void Application::initUniforms(int index, const mat4x4& rotation){
-	// Build transform matrices
-
-	// Translate the view
+	// View from which the 
 	vec3 focalPoint(-0.25, 0.0, -2.0);
+
 	// Rotate the object
-	angle1 = 2.0f; // arbitrary time
+	angle1 = 2.0f;
+
 	// Rotate the view point
 	angle2 = 3.0f * PI / 4.0f;
 
@@ -770,9 +790,9 @@ void Application::initUniforms(int index, const mat4x4& rotation){
 	mUniforms.viewMatrix = T2 * R2;
 
 	float ratio = static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT);
-	float focalLength = 2.0;
-	float near = 0.01f;
-	float far = 100.0f;
+	float focalLength = 2.5;
+	float near = 0.1f;
+	float far = 10.0f;
 	float divider = 1 / (focalLength * (far - near));
 	mUniforms.projectionMatrix = transpose(mat4x4(
 		1.0, 0.0, 0.0, 0.0,
@@ -784,12 +804,13 @@ void Application::initUniforms(int index, const mat4x4& rotation){
 	mUniforms.zScalar = 1.0f;
 	mUniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
 	mUniforms.rotation = rotation;
+
 	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(MyUniforms));
 }
 
 void Application::initUniformBuffer(){
 	BufferDescriptor bufferDesc;
-	bufferDesc.size = MAX_BUFFER_SIZE; // changed
+	bufferDesc.size = MAX_BUFFER_SIZE;
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 	bufferDesc.mappedAtCreation = false;
 	// Create uniform buffer
