@@ -158,8 +158,6 @@ void Application::onFrame() {
 		rotationGLM[3][2] = 0;
 		rotationGLM[3][3] = 1;
 
-		std::cout << rotationGLM << std::endl;
-
 
 		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
 
@@ -749,17 +747,18 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 
 		// Decision tree for each of the different display states
 		if(isQuaternion){
+			ImGui::Text("Ex. 0, 0, 0, 1 is the identity quaternion");
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q0", IMGUI_DOUBLE_SCALAR, &q0); // Input type 9 is double
+			ImGui::InputScalar("q0", IMGUI_DOUBLE_SCALAR, &q1); // Input type 9 is double
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q1", IMGUI_DOUBLE_SCALAR, &q1); 
+			ImGui::InputScalar("q1", IMGUI_DOUBLE_SCALAR, &q2); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q2", IMGUI_DOUBLE_SCALAR, &q2); 
+			ImGui::InputScalar("q2", IMGUI_DOUBLE_SCALAR, &q3); 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
-			ImGui::InputScalar("q3", IMGUI_DOUBLE_SCALAR, &q3); 
+			ImGui::InputScalar("q3", IMGUI_DOUBLE_SCALAR, &q0); 
 		}else if(isSO3){
 			ImGui::Text("SO3 Matrix:");
 
