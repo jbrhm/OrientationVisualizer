@@ -49,6 +49,10 @@ struct GLFWwindow;
 
 class Application {
 public:
+	Application(); 
+
+	~Application();
+
 	// A function called only once at the beginning. Returns false is init failed.
 	bool onInit();
 
@@ -64,14 +68,15 @@ public:
 	// A function called when the window is resized.
 	void onResize();
 
-	// Mouse events
-	void onMouseMove(double xpos, double ypos);
-	void onMouseButton(int button, int action, int mods);
-	void onScroll(double xoffset, double yoffset);
-
 private:
-	bool initWindowAndDevice();
-	void terminateWindowAndDevice();
+	void initGLFW();
+	void terminateGLFW();
+
+	void initAdapterAndDevice();
+	void terminateAapterAndDevice();
+
+	void initQueue();
+	void terminateQueue();
 
 	bool initSwapChain();
 	void terminateSwapChain();
@@ -130,11 +135,11 @@ private:
 	// Window and Device
 	GLFW::WindowPtr mWindow = nullptr;
 	wgpu::Instance mInstance = nullptr;
-	wgpu::Surface m_surface = nullptr;
+	wgpu::Surface mSurface = nullptr;
 	wgpu::Device mDevice = nullptr;
 	wgpu::Queue mQueue = nullptr;
 	// Keep the error callback alive
-	std::unique_ptr<wgpu::ErrorCallback> m_errorCallbackHandle;
+	std::unique_ptr<wgpu::ErrorCallback> mErrorCallback;
 
 	// Swap Chain
 	wgpu::SwapChain m_swapChain = nullptr;

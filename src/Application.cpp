@@ -13,10 +13,36 @@ constexpr float PI = 3.14159265358979323846f;
 #endif
 ///////////////////////////////////////////////////////////////////////////////
 // Public methods
+Application::Application(){
+	onInit();
+}
+
+Application::~Application(){
+	mInstance.release();
+}
 
 bool Application::onInit() {
-	std::cout << isDebug;
-	if (!initWindowAndDevice()) return false;
+	// Create WebGPU instance
+	if constexpr (isDebug){
+		std::cout << "Initializing Instance..." << std::endl;
+	}
+
+	mInstance = createInstance(InstanceDescriptor{});
+	if (!mInstance) {
+		std::cerr << "WebGPU did not initialize properly!" << std::endl;
+		throw std::runtime_error("WebGPU did not initialize properly!");
+	}
+
+	if constexpr (isDebug){
+		std::cout << "Instance: " << mInstance << std::endl;
+	}
+
+	initGLFW();
+
+	initAdapterAndDevice();
+
+	initQueue();
+
 	if (!initSwapChain()) return false;
 	if (!initDepthBuffer()) return false;
 	if (!initRenderPipeline()) return false;
@@ -231,6 +257,7 @@ void Application::onFrame() {
 #endif
 }
 
+// This function runs in the LIFO order like regular destructors
 void Application::onFinish() {
 	terminateGui();
 	terminateBindGroup();
@@ -239,7 +266,9 @@ void Application::onFinish() {
 	terminateRenderPipeline();
 	terminateDepthBuffer();
 	terminateSwapChain();
-	terminateWindowAndDevice();
+	terminateQueue();
+	terminateAapterAndDevice();
+	terminateGLFW();
 }
 
 bool Application::isRunning() {
@@ -254,37 +283,46 @@ void Application::onResize() {
 	// Re-init
 	initSwapChain();
 	initDepthBuffer();
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private methods
 
-bool Application::initWindowAndDevice() {
-	// Create WebGPU instance
-	mInstance = createInstance(InstanceDescriptor{});
-	if (!mInstance) {
-		std::cerr << "WebGPU did not initialize properly!" << std::endl;
-		throw std::runtime_error("WebGPU did not initialize properly!");
-	}
-
+void Application::initGLFW(){
 	// Initialize GLFW
+	if constexpr (isDebug){
+		std::cout << "Initializing GLFW..." << std::endl;
+	}
 	std::vector<std::pair<int, int>> args {{GLFW_CLIENT_API, GLFW_NO_API},{GLFW_RESIZABLE, GLFW_FALSE}};
 	GLFW::init(args);
+	if constexpr (isDebug){
+		std::cout << "GLFW Initialized" << std::endl;
+	}
 
 	//Create window
 	mWindow = GLFW::createWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Orientation Visualizer");
-	
-	std::cout << "Requesting adapter..." << std::endl;
-	m_surface = glfwGetWGPUSurface(mInstance, mWindow);
-	RequestAdapterOptions adapterOpts{};
-	adapterOpts.compatibleSurface = m_surface;
-	Adapter adapter = mInstance.requestAdapter(adapterOpts);
-	std::cout << "Got adapter: " << adapter << std::endl;
+}
 
+void Application::terminateGLFW(){
+	GLFW::terminate();
+}
+
+void Application::initAdapterAndDevice() {
+	if constexpr (isDebug){
+		std::cout << "Initializing Adapter..." << std::endl;
+	}
+	mSurface = glfwGetWGPUSurface(mInstance, mWindow);
+	RequestAdapterOptions adapterOpts{};
+	adapterOpts.compatibleSurface = mSurface;
+	Adapter adapter = mInstance.requestAdapter(adapterOpts);
+	if constexpr (isDebug){
+		std::cout << "Adapter: " << adapter << std::endl;
+	}
 	adapter.getLimits(&mSupportedLimits);
 
-	std::cout << "Requesting device..." << std::endl;
+	if constexpr (isDebug){
+		std::cout << "Initializing Device..." << std::endl;
+	}	
 	RequiredLimits requiredLimits = Default;
 	requiredLimits.limits.maxVertexAttributes = 4;
 	requiredLimits.limits.maxVertexBuffers = 1;
@@ -294,10 +332,8 @@ bool Application::initWindowAndDevice() {
 	requiredLimits.limits.minUniformBufferOffsetAlignment = mSupportedLimits.limits.minUniformBufferOffsetAlignment;
 	requiredLimits.limits.maxInterStageShaderComponents = 8;
 	requiredLimits.limits.maxBindGroups = 2;
-	//                                    ^ This was a 1
 	requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
 	requiredLimits.limits.maxUniformBufferBindingSize = sizeof(MyUniforms);
-	// Allow textures up to 2K
 	requiredLimits.limits.maxTextureDimension1D = 2048;
 	requiredLimits.limits.maxTextureDimension2D = 2048;
 	requiredLimits.limits.maxTextureArrayLayers = 1;
@@ -306,31 +342,41 @@ bool Application::initWindowAndDevice() {
 	requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 
 	DeviceDescriptor deviceDesc;
-	deviceDesc.label = "My Device";
+	deviceDesc.label = "WGPU Device";
 	deviceDesc.requiredFeaturesCount = 0;
 	deviceDesc.requiredLimits = &requiredLimits;
 	deviceDesc.defaultQueue.label = "The default queue";
 	mDevice = adapter.requestDevice(deviceDesc);
-	std::cout << "Got device: " << mDevice << std::endl;
+	if constexpr (isDebug){
+		std::cout << "Device: " << mDevice << std::endl;
+	}
 
-	// Add an error callback for more debug info
-	m_errorCallbackHandle = mDevice.setUncapturedErrorCallback([](ErrorType type, char const* message) {
-		std::cout << "Device error: type " << type;
-		if (message) std::cout << " (message: " << message << ")";
-		std::cout << std::endl;
+	// Device error callback for more descriptive 
+	mErrorCallback = mDevice.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+		std::cout << "Error Type: " << type;
+		if (message) std::cout << message << "\n";
 	});
-
-	mQueue = mDevice.getQueue();
 	adapter.release();
-	return mDevice != nullptr;
 }
 
-void Application::terminateWindowAndDevice() {
-	mQueue.release();
+void Application::terminateAapterAndDevice() {
 	mDevice.release();
-	m_surface.release();
-	mInstance.release();
-	GLFW::terminate();	
+	mSurface.release();
+}
+
+void Application::initQueue(){
+	// Initialize Queue
+	if constexpr (isDebug){
+		std::cout << "Initializing Queue..." << std::endl;
+	}
+	mQueue = mDevice.getQueue();
+	if constexpr (isDebug){
+		std::cout << "Queue: " << mQueue << std::endl;
+	}
+}
+
+void Application::terminateQueue(){
+	mQueue.release();
 }
 
 
@@ -346,7 +392,7 @@ bool Application::initSwapChain() {
 	swapChainDesc.usage = TextureUsage::RenderAttachment;
 	swapChainDesc.format = mSwapChainFormat;
 	swapChainDesc.presentMode = PresentMode::Fifo;
-	m_swapChain = mDevice.createSwapChain(m_surface, swapChainDesc);
+	m_swapChain = mDevice.createSwapChain(mSurface, swapChainDesc);
 	std::cout << "Swapchain: " << m_swapChain << std::endl;
 	return m_swapChain != nullptr;
 }
