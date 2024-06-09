@@ -27,30 +27,13 @@ struct MyUniforms {
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
-	var worldRot: mat4x4f;
-	worldRot[0][0] = 1.0;
-	worldRot[0][1] = 0.0;
-	worldRot[0][2] = 0.0;
-	worldRot[0][3] = 0.0;
-	worldRot[1][0] = 0.0;
-	worldRot[1][1] = 1.0;
-	worldRot[1][2] = 0.0;
-	worldRot[1][3] = 0.0;
-	worldRot[2][0] = 0.0;
-	worldRot[2][1] = 0.0;
-	worldRot[2][2] = 1.0;
-	worldRot[2][3] = 0.0;
-	worldRot[3][0] = 0.0;
-	worldRot[3][1] = 0.0;
-	worldRot[3][2] = 0.0;
-	worldRot[3][3] = 1.0;
 	var pos: vec3f;
 	pos = in.position;
 	pos.z = pos.z * uMyUniforms.zScalar;
 	var out: VertexOutput;
-	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * uMyUniforms.rotation * worldRot * vec4f(pos, 1.0);
+	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(pos, 1.0);
 	// Forward the normal
-    out.normal = (uMyUniforms.modelMatrix * uMyUniforms.rotation * worldRot * vec4f(in.normal, 0.0)).xyz;
+    out.normal = (uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(in.normal, 0.0)).xyz;
 	out.color = in.color;
 	return out;
 }
