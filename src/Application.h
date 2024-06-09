@@ -158,10 +158,10 @@ private:
 	int inputBoxSize = 76;
 
 	bool isQuaternion = true;
-	double q0 = 0.5;
-	double q1 = 0.5;
-	double q2 = 0.5;
-	double q3 = 0.5;
+	double q0 = 0.0;
+	double q1 = 0.0;
+	double q2 = 0.0;
+	double q3 = 1.0;
 
 	bool isSO3 = false;
 	double i00 = 1, i01 = 0, i02 = 0;

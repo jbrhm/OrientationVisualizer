@@ -27,13 +27,30 @@ struct MyUniforms {
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
+	var worldRot: mat4x4f;
+	worldRot[0][0] = -1.0;
+	worldRot[0][1] = 0.0;
+	worldRot[0][2] = 0.0;
+	worldRot[0][3] = 0.0;
+	worldRot[1][0] = 0.0;
+	worldRot[1][1] = -1.0;
+	worldRot[1][2] = 0.0;
+	worldRot[1][3] = 0.0;
+	worldRot[2][0] = 0.0;
+	worldRot[2][1] = 0.0;
+	worldRot[2][2] = -1.0;
+	worldRot[2][3] = 0.0;
+	worldRot[3][0] = 0.0;
+	worldRot[3][1] = 0.0;
+	worldRot[3][2] = 0.0;
+	worldRot[3][3] = 1.0;
 	var pos: vec3f;
 	pos = in.position;
 	pos.z = pos.z * uMyUniforms.zScalar;
 	var out: VertexOutput;
-	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(pos, 1.0);
+	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * worldRot * uMyUniforms.rotation * vec4f(pos, 1.0);
 	// Forward the normal
-    out.normal = (uMyUniforms.modelMatrix * uMyUniforms.rotation * vec4f(in.normal, 0.0)).xyz;
+    out.normal = (uMyUniforms.modelMatrix * uMyUniforms.rotation * worldRot * vec4f(in.normal, 0.0)).xyz;
 	out.color = in.color;
 	return out;
 }
@@ -42,12 +59,12 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let normal = normalize(in.normal);
 
-	let scalar = 1.3;
+	let scalar = 1.9;
 
-	let lightColor1 = scalar * vec3f(1.0, 0.9, 0.6);
-	let lightColor2 = scalar * vec3f(0.6, 0.9, 1.0);
-	let lightDirection1 = vec3f(0.5, -0.9, 0.1);
-	let lightDirection2 = vec3f(0.2, 0.4, 0.3);
+	let lightColor1 = scalar * vec3f(1.0, 1.0, 1.0);
+	let lightColor2 = 0.3 * scalar * vec3f(0.3, 0.3, 0.3);
+	let lightDirection1 = vec3f(0.25, 0.45, 0.05);
+	let lightDirection2 = vec3f(-0.25, -0.5, 1.5);
 	let shading1 = max(0.0, dot(lightDirection1, normal));
 	let shading2 = max(0.0, dot(lightDirection2, normal));
 	let shading = shading1 * lightColor1 + shading2 * lightColor2;

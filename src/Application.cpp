@@ -139,6 +139,8 @@ void Application::onFrame() {
 
 		Eigen::Matrix3d rotation = qr.householderQ();
 
+		mZScalar = 1.0;//v.norm();
+
 		rotationGLM[0][0] = rotation.coeff(0,0);
 		rotationGLM[0][1] = rotation.coeff(0,1);
 		rotationGLM[0][2] = rotation.coeff(0,2);
@@ -155,6 +157,8 @@ void Application::onFrame() {
 		rotationGLM[3][1] = 0;
 		rotationGLM[3][2] = 0;
 		rotationGLM[3][3] = 1;
+
+		std::cout << rotationGLM << std::endl;
 
 
 		mQueue.writeBuffer(mUniformBuffer, 2 * mUniformStride + offsetof(MyUniforms, zScalar), &mZScalar, sizeof(MyUniforms::zScalar));
@@ -820,9 +824,6 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(inputBoxSize);
 			ImGui::InputScalar("(2,2)", IMGUI_DOUBLE_SCALAR, &l122); 
-
-			ImGui::InputScalar("zScalar", IMGUI_FLOAT_SCALAR, &mZScalar); 
-
 		}
 		
 		// Display the refresh rate
