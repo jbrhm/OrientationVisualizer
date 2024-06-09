@@ -145,8 +145,8 @@ private:
 	wgpu::SwapChain mSwapChain = nullptr;
 
 	// Depth Buffer
-	wgpu::Texture m_depthTexture = nullptr;
-	wgpu::TextureView m_depthTextureView = nullptr;
+	wgpu::Texture mDepthTexture = nullptr;
+	wgpu::TextureView mDepthTextureView = nullptr;
 
 	// Render Pipeline
 	wgpu::ShaderModule m_shaderModule = nullptr;

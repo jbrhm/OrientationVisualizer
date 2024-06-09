@@ -44,6 +44,7 @@ bool Application::onInit() {
 	initQueue();
 
 	initSwapChain();
+
 	if (!initDepthBuffer()) return false;
 	if (!initRenderPipeline()) return false;
 
@@ -97,7 +98,7 @@ void Application::onFrame() {
 	renderPassDesc.colorAttachments = &renderPassColorAttachment;
 
 	RenderPassDepthStencilAttachment depthStencilAttachment;
-	depthStencilAttachment.view = m_depthTextureView;
+	depthStencilAttachment.view = mDepthTextureView;
 	depthStencilAttachment.depthClearValue = 1.0f;
 	depthStencilAttachment.depthLoadOp = LoadOp::Clear;
 	depthStencilAttachment.depthStoreOp = StoreOp::Store;
@@ -411,23 +412,28 @@ void Application::terminateSwapChain() {
 
 
 bool Application::initDepthBuffer() {
-	// Get the current size of the window's framebuffer:
-	int width, height;
-	glfwGetFramebufferSize(mWindow, &width, &height);
-
 	// Create the depth texture
+	if constexpr (isDebug){
+		std::cout << "Depth Buffer..." << std::endl;
+	}	
 	TextureDescriptor depthTextureDesc;
 	depthTextureDesc.dimension = TextureDimension::_2D;
 	depthTextureDesc.format = mDepthTextureFormat;
 	depthTextureDesc.mipLevelCount = 1;
 	depthTextureDesc.sampleCount = 1;
-	depthTextureDesc.size = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
+	depthTextureDesc.size = { static_cast<uint32_t>(WINDOW_WIDTH), static_cast<uint32_t>(WINDOW_HEIGHT), 1 };
 	depthTextureDesc.usage = TextureUsage::RenderAttachment;
 	depthTextureDesc.viewFormatCount = 1;
 	depthTextureDesc.viewFormats = (WGPUTextureFormat*)&mDepthTextureFormat;
-	m_depthTexture = mDevice.createTexture(depthTextureDesc);
-	std::cout << "Depth texture: " << m_depthTexture << std::endl;
-
+	mDepthTexture = mDevice.createTexture(depthTextureDesc);
+	std::cout << "Depth texture: " << mDepthTexture << std::endl;
+	if (!mDepthTexture) {
+		std::cerr << "Depth Texture did not initialize properly!" << std::endl;
+		throw std::runtime_error("Depth Texture did not initialize properly!");
+	}
+	if constexpr (isDebug){
+		std::cout << "Depth Texture: " << mDepthTexture << std::endl;
+	}
 	// Create the view of the depth texture manipulated by the rasterizer
 	TextureViewDescriptor depthTextureViewDesc;
 	depthTextureViewDesc.aspect = TextureAspect::DepthOnly;
@@ -437,16 +443,21 @@ bool Application::initDepthBuffer() {
 	depthTextureViewDesc.mipLevelCount = 1;
 	depthTextureViewDesc.dimension = TextureViewDimension::_2D;
 	depthTextureViewDesc.format = mDepthTextureFormat;
-	m_depthTextureView = m_depthTexture.createView(depthTextureViewDesc);
-	std::cout << "Depth texture view: " << m_depthTextureView << std::endl;
-
-	return m_depthTextureView != nullptr;
+	mDepthTextureView = mDepthTexture.createView(depthTextureViewDesc);
+	if (!mDepthTextureView) {
+		std::cerr << "Depth Texture View did not initialize properly!" << std::endl;
+		throw std::runtime_error("Depth Texture View did not initialize properly!");
+	}
+	if constexpr (isDebug){
+		std::cout << "Depth Texture View: " << mDepthTextureView << std::endl;
+	}
+	return mDepthTextureView != nullptr;
 }
 
 void Application::terminateDepthBuffer() {
-	m_depthTextureView.release();
-	m_depthTexture.destroy();
-	m_depthTexture.release();
+	mDepthTextureView.release();
+	mDepthTexture.destroy();
+	mDepthTexture.release();
 }
 
 void Application::writeRotation(){
