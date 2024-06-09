@@ -1,21 +1,19 @@
-#include "Application.h"
+#include "Rendering.hpp"
 
 using namespace wgpu;
 using glm::mat4x4;
 using glm::vec4;
 using glm::vec3;
 
-///////////////////////////////////////////////////////////////////////////////
-// Public methods
-Application::Application(){
+Rendering::Rendering(){
 	init();
 }
 
-Application::~Application(){
+Rendering::~Rendering(){
 	mInstance.release();
 }
 
-bool Application::init() {
+bool Rendering::init() {
 	// Create WebGPU instance
 	if constexpr (isDebug){
 		std::cout << "Initializing Instance..." << std::endl;
@@ -60,7 +58,7 @@ bool Application::init() {
 	return true;
 }
 
-void Application::updateFrame() {
+void Rendering::updateFrame() {
 	glfwPollEvents();
 	TextureView nextTexture = mSwapChain.getCurrentTextureView();
 	if (!nextTexture) {
@@ -227,7 +225,7 @@ void Application::updateFrame() {
 }
 
 // This function runs in the LIFO order like regular destructors
-void Application::terminate() {
+void Rendering::terminate() {
 	terminateGUI();
 	terminateBindGroup();
 	terminateUniforms();
@@ -240,14 +238,11 @@ void Application::terminate() {
 	terminateGLFW();
 }
 
-bool Application::isOpen() {
+bool Rendering::isOpen() {
 	return !glfwWindowShouldClose(mWindow);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Private methods
-
-void Application::initGLFW(){
+void Rendering::initGLFW(){
 	// Initialize GLFW
 	if constexpr (isDebug){
 		std::cout << "Initializing GLFW..." << std::endl;
@@ -262,11 +257,11 @@ void Application::initGLFW(){
 	mWindow = GLFW::createWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Orientation Visualizer");
 }
 
-void Application::terminateGLFW(){
+void Rendering::terminateGLFW(){
 	GLFW::terminate();
 }
 
-void Application::initAdapterAndDevice() {
+void Rendering::initAdapterAndDevice() {
 	if constexpr (isDebug){
 		std::cout << "Initializing Adapter..." << std::endl;
 	}
@@ -318,12 +313,12 @@ void Application::initAdapterAndDevice() {
 	adapter.release();
 }
 
-void Application::terminateAapterAndDevice() {
+void Rendering::terminateAapterAndDevice() {
 	mDevice.release();
 	mSurface.release();
 }
 
-void Application::initQueue(){
+void Rendering::initQueue(){
 	// Initialize Queue
 	if constexpr (isDebug){
 		std::cout << "Initializing Queue..." << std::endl;
@@ -338,12 +333,12 @@ void Application::initQueue(){
 	}
 }
 
-void Application::terminateQueue(){
+void Rendering::terminateQueue(){
 	mQueue.release();
 }
 
 
-void Application::initSwapChain() {
+void Rendering::initSwapChain() {
 	// Get the current size of the window's framebuffer:
 	if constexpr (isDebug){
 		std::cout << "Initializing Swap Chain..." << std::endl;
@@ -364,12 +359,12 @@ void Application::initSwapChain() {
 	}
 }
 
-void Application::terminateSwapChain() {
+void Rendering::terminateSwapChain() {
 	mSwapChain.release();
 }
 
 
-void Application::initDepthBuffer() {
+void Rendering::initDepthBuffer() {
 	// Create the depth texture
 	if constexpr (isDebug){
 		std::cout << "Depth Buffer..." << std::endl;
@@ -410,13 +405,13 @@ void Application::initDepthBuffer() {
 	}
 }
 
-void Application::terminateDepthBuffer() {
+void Rendering::terminateDepthBuffer() {
 	mDepthTextureView.release();
 	mDepthTexture.destroy();
 	mDepthTexture.release();
 }
 
-void Application::writeRotation(){
+void Rendering::writeRotation(){
 	if(isQuaternion){
 		SE3 = transpose(mat4x4(   2 * (std::pow(q0, 2) + std::pow(q1, 2)) - 1, 2 * (q1 * q2 - q0 * q3), 2 * (q1 * q3 + q0 * q2), 0,
 									 2 * (q1 * q2 + q0 * q3), 2 * (std::pow(q0, 2) + std::pow(q2, 2)) - 1, 2 * (q2 * q3 - q0 * q1), 0,
@@ -432,7 +427,7 @@ void Application::writeRotation(){
 	mQueue.writeBuffer(mUniformBuffer, mUniformStride + offsetof(Uniform, rotation), &SE3, sizeof(Uniform::rotation));
 }
 
-ShaderModule Application::loadShaderModule(const std::filesystem::path& path, Device device) {
+ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
 	std::ifstream file1(path);
 	if (!file1.is_open()) {
 		std::cerr << "Shader File View did not initialize properly!" << std::endl;
@@ -466,7 +461,7 @@ ShaderModule Application::loadShaderModule(const std::filesystem::path& path, De
 }
 
 
-void Application::initRenderPipeline() {
+void Rendering::initRenderPipeline() {
 	// Load the shader module
 	if constexpr (isDebug){
 		std::cout << "Shader Module..." << std::endl;
@@ -581,13 +576,13 @@ void Application::initRenderPipeline() {
 	}
 }
 
-void Application::terminateRenderPipeline() {
+void Rendering::terminateRenderPipeline() {
 	mRenderPipeline.release();
 	mShaderModule.release();
 	mBindGroupLayout.release();
 }
 
-void Application::loadGeometry(const std::string& url, int uniformID){
+void Rendering::loadGeometry(const std::string& url, int uniformID){
 	if constexpr (isDebug){
 		std::cout << "Loading " << url << "..." << std::endl;
 	}	
@@ -668,7 +663,7 @@ void Application::loadGeometry(const std::string& url, int uniformID){
 	initVertexBuffer();
 }
 
-void Application::initVertexBuffer(){
+void Rendering::initVertexBuffer(){
 	// Create vertex buffer
 	BufferDescriptor bufferDesc;
 	bufferDesc.size = mVertexDatas[mVertexDatas.size() - 1].size() * sizeof(VertexAttributes); // changed
@@ -688,20 +683,20 @@ void Application::initVertexBuffer(){
 	mIndexCounts.push_back(static_cast<int>(mVertexDatas[mVertexDatas.size() - 1].size()));
 }
 
-void Application::terminateGeometry() {
+void Rendering::terminateGeometry() {
 	for(auto buff : mVertexBuffers){
 		buff.destroy();
 		buff.release();
 	}
 }
 
-void Application::terminateUniforms() {
+void Rendering::terminateUniforms() {
 	mUniformBuffer.destroy();
 	mUniformBuffer.release();
 }
 
 
-void Application::initBindGroup() {
+void Rendering::initBindGroup() {
 	// Create a binding
 	if constexpr (isDebug){
 		std::cout << "Bind Group..." << std::endl;
@@ -723,11 +718,11 @@ void Application::initBindGroup() {
 	}	
 }
 
-void Application::terminateBindGroup() {
+void Rendering::terminateBindGroup() {
 	mBindGroup.release();
 }
 
-void Application::initUniform(int index, const mat4x4& rotation, float x, float y, float z){
+void Rendering::initUniform(int index, const mat4x4& rotation, float x, float y, float z){
 	// View from which the 
 	vec3 focalPoint(x, y, z);
 
@@ -765,7 +760,7 @@ void Application::initUniform(int index, const mat4x4& rotation, float x, float 
 	mQueue.writeBuffer(mUniformBuffer, index * mUniformStride, &mUniforms, sizeof(Uniform));
 }
 
-void Application::initUniformBuffer(){
+void Rendering::initUniformBuffer(){
 	BufferDescriptor bufferDesc;
 	bufferDesc.size = MAX_BUFFER_SIZE;
 	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
@@ -778,7 +773,7 @@ void Application::initUniformBuffer(){
 	mUniformBuffer = mDevice.createBuffer(bufferDesc);
 }
 
-void Application::adjustView(float x, float y, float z){
+void Rendering::adjustView(float x, float y, float z){
 	for(size_t i = 0; i < MAX_NUM_UNIFORMS; ++i){
 		initUniform(i, transpose(mat4x4(	 1, 0, 0, 0,
 																0,1, 0, 0,

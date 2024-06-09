@@ -53,7 +53,7 @@
 
 struct GLFWwindow;
 
-class Application {
+class Rendering {
 private:
 	struct Uniform {
 		// View Adjustment Matrices
@@ -229,9 +229,9 @@ private:
 	void adjustView(float x, float y, float z);
 
 public:
-	Application(); 
+	Rendering(); 
 
-	~Application();
+	~Rendering();
 
 	bool init();
 

@@ -1,11 +1,11 @@
-#include "Application.h"
+#include "Rendering.hpp"
 
 using namespace wgpu;
 using glm::mat4x4;
 using glm::vec4;
 using glm::vec3;
 
-void Application::initGUI() {
+void Rendering::initGUI() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::GetIO();
@@ -26,12 +26,12 @@ void Application::initGUI() {
 	io.FontGlobalScale = imguiScale;
 }
 
-void Application::terminateGUI() {
+void Rendering::terminateGUI() {
 	ImGui_ImplGlfw_Shutdown();
 	ImGui_ImplWGPU_Shutdown();
 }
 
-void Application::updateGUI(RenderPassEncoder renderPass) {
+void Rendering::updateGUI(RenderPassEncoder renderPass) {
     // Grab next frams
 	ImGui_ImplWGPU_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
