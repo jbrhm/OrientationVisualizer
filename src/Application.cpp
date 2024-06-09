@@ -135,9 +135,14 @@ void Application::onFrame() {
 						v.z(), v.z() + 1, v.z(),
 		qr.compute(vectorMatrix);
 
-		Eigen::MatrixXf thinQ(Eigen::MatrixXf::Identity(3,3));
+		Eigen::Matrix3d reorderMatrix = Eigen::Matrix3d::Zero();
+		reorderMatrix(0, 2) = 1;
+		reorderMatrix(1, 0) = 1;
+		reorderMatrix(2, 1) = 1;
 
-		Eigen::Matrix3d rotation = qr.householderQ();
+		Eigen::Matrix3d rotation = reorderMatrix * qr.householderQ();
+
+		std::cout << v << std::endl;
 
 		mZScalar = 1.0;//v.norm();
 
