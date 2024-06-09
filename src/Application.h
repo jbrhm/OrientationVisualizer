@@ -98,7 +98,7 @@ private:
 
 	// Window and Device
 	GLFWwindow* m_window = nullptr;
-	wgpu::Instance m_instance = nullptr;
+	wgpu::Instance mInstance = nullptr;
 	wgpu::Surface m_surface = nullptr;
 	wgpu::Device mDevice = nullptr;
 	wgpu::Queue mQueue = nullptr;

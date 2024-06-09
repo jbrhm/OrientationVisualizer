@@ -281,15 +281,15 @@ void Application::onResize() {
 // Private methods
 
 bool Application::initWindowAndDevice() {
-	m_instance = createInstance(InstanceDescriptor{});
-	if (!m_instance) {
-		std::cerr << "Could not initialize WebGPU!" << std::endl;
-		return false;
+	mInstance = createInstance(InstanceDescriptor{});
+	if (!mInstance) {
+		std::cerr << "WebGPU did not initialize properly!" << std::endl;
+		throw std::runtime_error("WebGPU did not initialize properly!");
 	}
 
 	if (!glfwInit()) {
-		std::cerr << "Could not initialize GLFW!" << std::endl;
-		return false;
+		std::cerr << "GLFW did not initialize properly!" << std::endl;
+		throw std::runtime_error("GLFW did not initialize properly!");
 	}
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -301,10 +301,10 @@ bool Application::initWindowAndDevice() {
 	}
 
 	std::cout << "Requesting adapter..." << std::endl;
-	m_surface = glfwGetWGPUSurface(m_instance, m_window);
+	m_surface = glfwGetWGPUSurface(mInstance, m_window);
 	RequestAdapterOptions adapterOpts{};
 	adapterOpts.compatibleSurface = m_surface;
-	Adapter adapter = m_instance.requestAdapter(adapterOpts);
+	Adapter adapter = mInstance.requestAdapter(adapterOpts);
 	std::cout << "Got adapter: " << adapter << std::endl;
 
 	adapter.getLimits(&mSupportedLimits);
@@ -354,7 +354,7 @@ void Application::terminateWindowAndDevice() {
 	mQueue.release();
 	mDevice.release();
 	m_surface.release();
-	m_instance.release();
+	mInstance.release();
 
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
