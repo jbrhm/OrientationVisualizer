@@ -8,3 +8,7 @@ The orientation application is meant to be used as a way to visualize some abstr
   - Lie Subtract
   - Lie Add (Coming soon)
 ## Libraries Used
+- WebGPU
+- Imgui
+- Glm
+- Eigen
