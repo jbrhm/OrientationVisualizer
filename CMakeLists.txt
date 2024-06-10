@@ -22,7 +22,7 @@ add_executable(Viz
 )
 
 # Build Configurations
-set(isDEBUG TRUE)
+set(isDEBUG FALSE)
 if(isDEBUG)
 	target_compile_options(Viz PRIVATE -g3)
 	target_compile_definitions(Viz PRIVATE

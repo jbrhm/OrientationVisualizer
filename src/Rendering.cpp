@@ -129,14 +129,14 @@ void Rendering::updateFrame() {
 					r120, r121, r122;
 
 		// Depending on the desired operation
-		Eigen::Vector3d desired;
+		Eigen::Vector3d desired = Eigen::Vector3d::Zero();
 		if(isSub){
 			// This is lhs * (rhs inverse) bc orthogonal matrices transposed are their own inverse
 			Eigen::Matrix3d composed = lhsSO3 * rhsSO3.transpose();
 			desired = LieAlgebra::logarithmicMap(composed);
 		}
 		
-		Eigen::Vector3d v;
+		Eigen::Vector3d v = Eigen::Vector3d::Zero();
 		v.x() = desired.x();
 		v.y() = -1 * desired.y();
 		v.z() = desired.z();
