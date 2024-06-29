@@ -43,5 +43,7 @@
           - libxcursor-dev
           - libxi-dev
           - xorg-dev
+          - libx11-dev
+          - libxrandr-dev
         state: latest
         update_cache: true  
