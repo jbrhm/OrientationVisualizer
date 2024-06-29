@@ -19,7 +19,7 @@ option(DEV_MODE "Set up development helper settings" ON)
 
 add_executable(Viz
 	${srcs}
-)
+) 
 
 # Build Configurations
 set(isDEBUG FALSE)
