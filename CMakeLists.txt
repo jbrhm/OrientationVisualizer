@@ -25,24 +25,27 @@ add_executable(Viz
 # Build Configurations
 add_library(VisualizerCompileOptions INTERFACE)
 
+set(isDEBUG OFF)
+
 target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
 
-set(isDEBUG ON)
+target_compile_options(VisualizerCompileOptions INTERFACE $<IF:$<BOOL:${isDEBUG}>,-g3,-O3>)
 
 if(isDEBUG)
 	message("Using Debug Build")
-	target_compile_options(VisualizerCompileOptions INTERFACE -g3)
-	target_compile_definitions(VisualizerCompileOptions INTERFACE
-		DEBUG="ON"
-	)
+	#target_compile_options(VisualizerCompileOptions INTERFACE -g3)
+	#target_compile_definitions(VisualizerCompileOptions INTERFACE
+		#	DEBUG="ON"
+		#)
 else()
 	message("Using Optimized Build")
-	target_compile_options(VisualizerCompileOptions INTERFACE -O3)
+	#target_compile_options(VisualizerCompileOptions INTERFACE -O3)
 endif()
 
 # Define the resources directory
 target_compile_definitions(Viz PRIVATE
 	RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
+	$<$<BOOL:${isDEBUG}>:DEBUG="ON">
 )
 
 target_include_directories(Viz PRIVATE ${includes})
