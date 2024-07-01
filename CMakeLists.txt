@@ -55,5 +55,8 @@ if (MSVC)
 endif (MSVC)
 
 install(TARGETS Viz DESTINATION bin)
+message(${CMAKE_BINARY_DIR})
+install(FILES cmake/viz.conf DESTINATION /etc/ld.so.conf.d)
+install(FILES ${CMAKE_BINARY_DIR}/libwgpu_native.so DESTINATION lib)
 
 include(cmake/Packing.cmake)
