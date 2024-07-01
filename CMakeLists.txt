@@ -53,3 +53,7 @@ if (MSVC)
 	# Disable warning C4201: nonstandard extension used: nameless struct/union
 	target_compile_options(Viz PUBLIC /wd4201)
 endif (MSVC)
+
+install(TARGETS Viz DESTINATION bin)
+
+include(cmake/Packing.cmake)
