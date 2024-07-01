@@ -27,8 +27,7 @@ add_library(VisualizerCompileOptions INTERFACE)
 
 target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
 
-cmake_policy(SET CMP0077 OLD)
-set(isDEBUG OFF)
+set(isDEBUG ON)
 
 if(isDEBUG)
 	message("Using Debug Build")
