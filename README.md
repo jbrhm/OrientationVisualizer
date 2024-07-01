@@ -30,3 +30,5 @@ The orientation application is meant to be used as a way to visualize some abstr
 - Update Linker and Binaries Path:
   - Add `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/OrientationVisualizer/lib/` to bash/zsh
   - Add `export PATH="/opt/OrientationVisualizer/bin:$PATH"`
+- Usage
+  - Run `Viz`
