@@ -31,17 +31,6 @@ target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
 
 target_compile_options(VisualizerCompileOptions INTERFACE $<IF:$<BOOL:${isDEBUG}>,-g3,-O3>)
 
-if(isDEBUG)
-	message("Using Debug Build")
-	#target_compile_options(VisualizerCompileOptions INTERFACE -g3)
-	#target_compile_definitions(VisualizerCompileOptions INTERFACE
-		#	DEBUG="ON"
-		#)
-else()
-	message("Using Optimized Build")
-	#target_compile_options(VisualizerCompileOptions INTERFACE -O3)
-endif()
-
 # Define the resources directory
 target_compile_definitions(Viz PRIVATE
 	RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
