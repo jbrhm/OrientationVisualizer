@@ -27,14 +27,17 @@ add_library(VisualizerCompileOptions INTERFACE)
 
 target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
 
-option(isDEBUG "Whether there will be debug output in the build or not" ON)
+cmake_policy(SET CMP0077 OLD)
+set(isDEBUG OFF)
 
 if(isDEBUG)
+	message("Using Debug Build")
 	target_compile_options(VisualizerCompileOptions INTERFACE -g3)
 	target_compile_definitions(VisualizerCompileOptions INTERFACE
 		DEBUG="ON"
 	)
 else()
+	message("Using Optimized Build")
 	target_compile_options(VisualizerCompileOptions INTERFACE -O3)
 endif()
 
