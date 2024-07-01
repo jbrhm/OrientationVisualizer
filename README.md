@@ -25,4 +25,4 @@ The orientation application is meant to be used as a way to visualize some abstr
   - Option 2)
     - Manually install the dependecies that are in `ansible/dev.yml`
 - Install Visualizer:
-  - Download the debian package [Here](https://jbrhm.github.io/WebGPUTutorial/OrientationVisualizer_1.deb)
+  - Download the debian package [Here](https://github.com/jbrhm/WebGPUTutorial/raw/main/packages/OrientationVisualizer_1.deb)
