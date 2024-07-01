@@ -16,19 +16,26 @@ include(cmake/macros.cmake)
 
 set_source_directory(srcs src)
 
+set_include_directory(includes src)
+
 add_executable(Viz
 	${srcs}
 ) 
 
 # Build Configurations
-set(isDEBUG FALSE)
+add_library(VisualizerCompileOptions INTERFACE)
+
+target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
+
+option(isDEBUG "Whether there will be debug output in the build or not" ON)
+
 if(isDEBUG)
-	target_compile_options(Viz PRIVATE -g3)
-	target_compile_definitions(Viz PRIVATE
+	target_compile_options(VisualizerCompileOptions INTERFACE -g3)
+	target_compile_definitions(VisualizerCompileOptions INTERFACE
 		DEBUG="ON"
 	)
 else()
-	target_compile_options(Viz PRIVATE -O3)
+	target_compile_options(VisualizerCompileOptions INTERFACE -O3)
 endif()
 
 # Define the resources directory
@@ -36,12 +43,11 @@ target_compile_definitions(Viz PRIVATE
 	RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
 )
 
-target_include_directories(Viz PRIVATE .)
+target_include_directories(Viz PRIVATE ${includes})
 
-target_link_libraries(Viz PRIVATE glfw webgpu glfw3webgpu glm assimp imgui eigen)
+target_link_libraries(Viz PRIVATE VisualizerCompileOptions glfw webgpu glfw3webgpu glm assimp imgui eigen)
 
 set_target_properties(Viz PROPERTIES
-	CXX_STANDARD 17
 	VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_ON_ERROR=1"
 )
 
