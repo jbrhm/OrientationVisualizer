@@ -37,16 +37,15 @@ target_compile_definitions(Viz PRIVATE
 	$<$<BOOL:${isDEBUG}>:DEBUG="ON">
 )
 
-target_include_directories(Viz PRIVATE ${includes})
+target_include_directories(Viz PRIVATE ${includes} ${CMAKE_BINARY_DIR})
 
-target_link_libraries(Viz PRIVATE VisualizerCompileOptions glfw webgpu glfw3webgpu glm assimp imgui eigen)
+target_link_libraries(Viz PRIVATE VisualizerCompileOptions glfw glfw3webgpu webgpu_cpp webgpu_dawn webgpuhpp glm assimp imgui eigen)
 
 set_target_properties(Viz PROPERTIES
 	VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_ON_ERROR=1"
 )
 
 target_treat_all_warnings_as_errors(Viz)
-target_copy_webgpu_binaries(Viz)
 
 # Ignore a warning that GLM requires to bypass
 if (MSVC)
@@ -55,5 +54,6 @@ if (MSVC)
 endif (MSVC)
 
 install(TARGETS Viz DESTINATION bin)
+
 
 include(cmake/Packing.cmake)

@@ -99,7 +99,6 @@ void Rendering::updateFrame() {
 
 	renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
 
-	renderPassDesc.timestampWriteCount = 0;
 	renderPassDesc.timestampWrites = nullptr;
 	RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
 
@@ -297,7 +296,6 @@ void Rendering::initAdapterAndDevice() {
 
 	DeviceDescriptor deviceDesc;
 	deviceDesc.label = "WGPU Device";
-	deviceDesc.requiredFeaturesCount = 0;
 	deviceDesc.requiredLimits = &requiredLimits;
 	deviceDesc.defaultQueue.label = "The default queue";
 	mDevice = adapter.requestDevice(deviceDesc);

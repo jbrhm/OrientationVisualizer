@@ -11,7 +11,7 @@
 #include <math.h>
 
 // WEBGPU
-#include <webgpu/webgpu.hpp>
+#include <webgpu.hpp>
 
 // GLFW3WEBGPU
 #include <glfw3webgpu.h>

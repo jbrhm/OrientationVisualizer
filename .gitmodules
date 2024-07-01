@@ -1,0 +1,5 @@
+[submodule "deps/dawn"]
+	path = deps/dawn
+	url = https://dawn.googlesource.com/dawn
+	shallow = true
+	branch = chromium/6429

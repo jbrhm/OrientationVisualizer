@@ -11,6 +11,7 @@
         name: 
           - gnupg
     - name: Get Clang-18 Signature
+      become: true
       apt_key:
         url: https://apt.llvm.org/llvm-snapshot.gpg.key
 
@@ -45,5 +46,13 @@
           - xorg-dev
           - libx11-dev
           - libxrandr-dev
+          - mesa-common-dev
+          - libx11-xcb-dev
+          - pkg-config
+          - nodejs
+          - npm
         state: latest
         update_cache: true  
+
+    - name: Fetch WebGPU Deps
+      command: python3 tools/fetch_dawn_dependencies.py --use-test-deps
