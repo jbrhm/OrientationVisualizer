@@ -16,8 +16,6 @@ include(cmake/macros.cmake)
 
 set_source_directory(srcs src)
 
-option(DEV_MODE "Set up development helper settings" ON)
-
 add_executable(Viz
 	${srcs}
 ) 
@@ -46,6 +44,7 @@ set_target_properties(Viz PROPERTIES
 	CXX_STANDARD 17
 	VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_ON_ERROR=1"
 )
+
 target_treat_all_warnings_as_errors(Viz)
 target_copy_webgpu_binaries(Viz)
 
