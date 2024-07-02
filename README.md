@@ -32,3 +32,6 @@ The orientation application is meant to be used as a way to visualize some abstr
   - Add `export PATH="/opt/OrientationVisualizer/bin:$PATH"`
 - Usage
   - Run `Viz`
+
+## Uninstallation
+- Run `sudo apt remove orientationvisualizer`
