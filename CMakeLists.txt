@@ -26,6 +26,7 @@ add_executable(Viz
 add_library(VisualizerCompileOptions INTERFACE)
 
 set(isDEBUG OFF)
+set(isPackage ON)
 
 target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
 
@@ -33,7 +34,7 @@ target_compile_options(VisualizerCompileOptions INTERFACE $<IF:$<BOOL:${isDEBUG}
 
 # Define the resources directory
 target_compile_definitions(Viz PRIVATE
-	RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
+	$<IF:$<BOOL:${isPackage}>,RESOURCE_DIR="/opt/${PROJECT_NAME}/resources/",RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources/">
 	$<$<BOOL:${isDEBUG}>:DEBUG="ON">
 )
 
@@ -54,8 +55,6 @@ if (MSVC)
 	target_compile_options(Viz PUBLIC /wd4201)
 endif (MSVC)
 
-install(TARGETS Viz DESTINATION bin)
-
-include(cmake/binaries.cmake)
+include(cmake/installation.cmake)
 
 include(cmake/Packing.cmake)

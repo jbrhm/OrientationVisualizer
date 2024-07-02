@@ -1,3 +1,7 @@
+# Install Application
+install(TARGETS Viz DESTINATION bin)
+
+# Install Shared Library Dependencies
 install(FILES ${CMAKE_BINARY_DIR}/libwgpu_native.so DESTINATION lib)
 install(CODE [[
         file(GET_RUNTIME_DEPENDENCIES
@@ -13,3 +17,5 @@ install(CODE [[
             )
         endforeach()
       ]])
+
+install(DIRECTORY ${CMAKE_BINARY_DIR}/../resources DESTINATION .)
