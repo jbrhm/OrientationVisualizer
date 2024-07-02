@@ -20,7 +20,7 @@ The orientation application is meant to be used as a way to visualize some abstr
 - Install Dependencies:
   - Option 1 (Apt)
     - Install ansible `sudo apt install ansible`
-    - Clone and cd to the ansible folder
+    - Clone/download the contents of the ansible folder and cd to the ansible folder
     - Run dependecy install script `chmod +x ansible.sh && sudo ./ansible.sh ./dev.yml`
   - Option 2
     - Manually install the dependecies that are in `ansible/dev.yml`
