@@ -29,6 +29,12 @@ The orientation application is meant to be used as a way to visualize some abstr
 - Install Visualizer:
   - Download the debian package [Here](https://github.com/jbrhm/WebGPUTutorial/raw/main/packages/OrientationVisualizer_1.deb)
   - Install using package manager `sudo apt install -f ./OrientationVisualizer_1.deb`
+  - If encountering difficulties do the following:
+    - Clone and cd into this repo.
+    - Run `cmake . -B build && cmake --build build && sudo cmake --install build`
+      - **Make sure CMake version >= 3.27**
+      - Make sure C++ compiler can compile C++ 20
+      - Make sure to have a CUDA compiler enabled.
 - Source Environment Configuration:
   - `source /opt/OrientationVisualizer/resources/OrientationVizualizer.sh`
 - Usage
