@@ -43,3 +43,4 @@ The orientation application is meant to be used as a way to visualize some abstr
 
 ## Uninstallation
 - Run `sudo apt remove orientationvisualizer`
+- If Orientation Visualizer was not installed using apt instead do `sudo rm -rf /opt/OrientationVisualizer`
