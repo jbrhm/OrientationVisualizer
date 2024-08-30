@@ -37,6 +37,7 @@ The orientation application is meant to be used as a way to visualize some abstr
       - Make sure to have a CUDA compiler enabled.
 - Source Environment Configuration:
   - `source /opt/OrientationVisualizer/resources/OrientationVizualizer.sh`
+  - **This needs to be done at the beginning of every terminal session, so it's recommended to put it in the `.bashrc`/`.zshrc` file**
 - Usage
   - Run `Viz`
 
