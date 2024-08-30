@@ -20,7 +20,7 @@ The orientation application is meant to be used as a way to visualize some abstr
 - Dependencies:
   - Nvidia Drivers: Follow the proper instructions for your operating system.
   - If encountering difficulties do one of the following:
-    - Option 1 (Apt for Docker)
+    - Option 1 (Apt)
       - Install ansible `sudo apt install ansible`
       - Clone/download the contents of the ansible folder and cd to the ansible folder
       - Run dependecy install script `chmod +x ansible.sh && sudo ./ansible.sh ./dev.yml`
