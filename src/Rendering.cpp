@@ -55,12 +55,21 @@ bool Rendering::init() {
 
 	initGUI();
 
+	mBeginFrame = std::chrono::system_clock::now();
+	mEndFrame = mBeginFrame + inverseFPS;
+
 	return true;
 }
 
 void Rendering::updateFrame() {
 	glfwPollEvents();
 	TextureView nextTexture = mSwapChain.getCurrentTextureView();
+	if(!nextTexture){
+		terminateSwapChain();
+		initSwapChain();
+		nextTexture = mSwapChain.getCurrentTextureView();
+	}
+
 	if (!nextTexture) {
 		std::cerr << "Cannot acquire next swap chain texture" << std::endl;
 		return;
@@ -222,6 +231,10 @@ void Rendering::updateFrame() {
 	// Check for pending error callbacks
 	mDevice.tick();
 #endif
+
+	std::this_thread::sleep_until(mEndFrame);
+	mBeginFrame = mEndFrame;
+	mEndFrame = mBeginFrame + inverseFPS;
 }
 
 // This function runs in the LIFO order like regular destructors
@@ -430,8 +443,8 @@ void Rendering::writeRotation(){
 ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Device device) {
 	std::ifstream file1(path);
 	if (!file1.is_open()) {
-		std::cerr << "Shader File View did not initialize properly!" << std::endl;
-		throw std::runtime_error("Shader File did not initialize");
+		std::cerr << "Shader File did not open properly! " << path.string() << std::endl;
+		throw std::runtime_error("Shader File did not open");
 	}
 	// Read in file
 	size_t filesize = 0;
@@ -445,8 +458,8 @@ ShaderModule Rendering::loadShaderModule(const std::filesystem::path& path, Devi
 
 	std::ifstream file2(path);
 	if (!file2.is_open()) {
-		std::cerr << "Shader File View did not initialize properly!" << std::endl;
-		throw std::runtime_error("Shader File did not initialize");
+		std::cerr << "Shader Filedid not initialize properly!" << std::endl;
+		throw std::runtime_error("Shader File did not initialize properly");
 	}
 	file2.read(shaderSourceCode.data(), filesize);
 

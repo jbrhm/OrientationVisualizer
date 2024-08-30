@@ -9,6 +9,8 @@
 #include <string>
 #include <array>
 #include <math.h>
+#include <chrono>
+#include <thread>
 
 // WEBGPU
 #include <webgpu/webgpu.hpp>
@@ -176,8 +178,8 @@ private:
 	size_t mUniformStride;
 
 	// Window sizing
-	static constexpr int WINDOW_WIDTH = 1920;
-	static constexpr int WINDOW_HEIGHT = 1080;
+	static constexpr int WINDOW_WIDTH = 1280;
+	static constexpr int WINDOW_HEIGHT = 720;
 
 	// Imgui constants
 	static constexpr int IMGUI_DOUBLE_SCALAR = 9;
@@ -188,6 +190,15 @@ private:
 
 	// Max mesh buffer size
 	static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
+
+	// FPS Limiting Variables
+	//
+	using dsec = std::chrono::duration<double>;
+	static constexpr double FPS_LIMIT = 60.0;
+	static constexpr auto inverseFPS = duration_cast<std::chrono::system_clock::duration>(dsec{1./FPS_LIMIT});
+
+	std::chrono::time_point<std::chrono::system_clock> mBeginFrame;
+	std::chrono::time_point<std::chrono::system_clock> mEndFrame;
 
 	void initGLFW();
 	void terminateGLFW();
