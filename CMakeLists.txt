@@ -26,7 +26,7 @@ add_executable(Viz
 add_library(VisualizerCompileOptions INTERFACE)
 
 set(isDEBUG OFF)
-set(isPackage ON)
+set(isPackage OFF)
 
 target_compile_features(VisualizerCompileOptions INTERFACE cxx_std_20)
 
