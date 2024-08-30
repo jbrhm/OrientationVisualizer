@@ -25,7 +25,7 @@ The orientation application is meant to be used as a way to visualize some abstr
       - Clone/download the contents of the ansible folder and cd to the ansible folder
       - Run dependecy install script `chmod +x ansible.sh && sudo ./ansible.sh ./dev.yml`
     - Option 2
-      - Manually install the dependecies that are in `ansible/dev.yml`
+      - Manually install the dependecies that are in `ansible/dev.yml` **If not using X11 (ie. wayland) do not install all of the X11 libraries, instead build from source**
 - Install Visualizer:
   - Download the debian package [Here](https://github.com/jbrhm/WebGPUTutorial/raw/main/packages/OrientationVisualizer_1.deb)
   - Install using package manager `sudo apt install -f ./OrientationVisualizer_1.deb`
