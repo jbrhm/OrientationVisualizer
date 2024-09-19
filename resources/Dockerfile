@@ -1,12 +1,13 @@
 FROM ubuntu:latest
 
-RUN apt update
-RUN apt -y install sudo
-RUN sudo apt -y install git ansible wget
-RUN git clone https://github.com/jbrhm/OrientationVisualizer.git
-RUN cd OrientationVisualizer
-
 RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
 
 USER docker
-RUN ./build.sh
+
+RUN apt update
+RUN apt -y install sudo
+RUN sudo apt -y install git ansible wget
+RUN wget -O bootstrap.sh https://raw.githubusercontent.com/jbrhm/OrientationVisualizer/refs/heads/main/scripts/bootstrap.sh && chmod +x ./bootstrap.sh && ./bootstrap.sh
+RUN cd OrientationVisualizer
+
+CMD Viz

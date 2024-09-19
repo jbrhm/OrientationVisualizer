@@ -13,3 +13,5 @@ cd ~/OrientationVisualizer
 cmake . -B build
 cmake --build build
 sudo cmake --install build
+
+source /opt/OrientationVisualizer/resources/OrientationVizualizer.sh
