@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Orientation Visualizer
-      uses: jbrhm/clone-github-repo-action@v2.3
+      uses: jbrhm
       with:
         owner: 'jbrhm'
         repository: 'OrientationVisualizer'
