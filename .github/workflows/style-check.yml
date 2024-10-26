@@ -8,12 +8,6 @@ on:
       - main
 
 jobs:
-  login-to-ghcr:
-    name: Log In To GHCR
-    runs-on: ubuntu-latest
-    steps:
-      - name: Log in to registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
   check-style:
     name: Run Style Checker
     runs-on: ubuntu-latest
