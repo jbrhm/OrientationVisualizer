@@ -12,7 +12,9 @@ Rendering::~Rendering() { mInstance.release(); }
 bool Rendering::init() {
   // Create WebGPU instance
   if constexpr (isDebug) {
-    std::cout << "Initializing Instance..." << std::endl;
+    std::cout 
+		<< "Initializing Instance..." << std::endl
+		;
   }
 
   mInstance = createInstance(InstanceDescriptor{});
