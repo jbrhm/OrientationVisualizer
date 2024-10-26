@@ -1,15 +1,15 @@
 #pragma once
 
 // STL
+#include <array>
+#include <cassert>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <cassert>
+#include <math.h>
 #include <sstream>
 #include <string>
-#include <array>
-#include <math.h>
-#include <chrono>
 #include <thread>
 
 // WEBGPU
@@ -21,234 +21,237 @@
 // GLM
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_LEFT_HANDED
-#include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <glm/fwd.hpp>
+#include <glm/glm.hpp>
 #include <glm/matrix.hpp>
 
 // ASSIMP
 #include <assimp-3.3.1/include/assimp/Importer.hpp>
 #include <assimp-3.3.1/include/assimp/cimport.h>
+#include <assimp-3.3.1/include/assimp/material.h>
 #include <assimp-3.3.1/include/assimp/postprocess.h>
 #include <assimp-3.3.1/include/assimp/scene.h>
-#include <assimp-3.3.1/include/assimp/material.h>
 
 // IMGUI
-#include <imgui.h>
-#include <backends/imgui_impl_wgpu.h>
 #include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_wgpu.h>
+#include <imgui.h>
 
 // EIGEN
 #include <Eigen/Core>
 #include <Eigen/QR>
 
 // Codebase
+#include "GLFW.hpp"
 #include "LieAlgebra.hpp"
 #include "utils.hpp"
-#include "GLFW.hpp"
 
-#ifdef DEBUG 
-	constexpr bool isDebug = true;
+#ifdef DEBUG
+constexpr bool isDebug = true;
 #else
-	constexpr bool isDebug = false;
+constexpr bool isDebug = false;
 #endif
 
 struct GLFWwindow;
 
 class Rendering {
 private:
-	struct Uniform {
-		// View Adjustment Matrices
-        glm::mat4x4 projectionMatrix;
-        glm::mat4x4 viewMatrix;
-        glm::mat4x4 modelMatrix;
-        glm::mat4x4 rotation;
-        // Color
-        std::array<float, 4> color;
-		// How far the mesh should scale in z direction (vector)
-        float zScalar;
-        float _pad[3];
-    };
+  struct Uniform {
+    // View Adjustment Matrices
+    glm::mat4x4 projectionMatrix;
+    glm::mat4x4 viewMatrix;
+    glm::mat4x4 modelMatrix;
+    glm::mat4x4 rotation;
+    // Color
+    std::array<float, 4> color;
+    // How far the mesh should scale in z direction (vector)
+    float zScalar;
+    float _pad[3];
+  };
 
-	// check byte alignment
-	static_assert(sizeof(Uniform) % 16 == 0);
+  // check byte alignment
+  static_assert(sizeof(Uniform) % 16 == 0);
 
-	// Fields each vertex will have
-	struct VertexAttributes {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec3 color;
-    };  
+  // Fields each vertex will have
+  struct VertexAttributes {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 color;
+  };
 
-	// Window
-	GLFW::WindowPtr mWindow = nullptr;
+  // Window
+  GLFW::WindowPtr mWindow = nullptr;
 
-	// Instance
-	wgpu::Instance mInstance = nullptr;
+  // Instance
+  wgpu::Instance mInstance = nullptr;
 
-	// Device
-	wgpu::SupportedLimits mSupportedLimits;
-	wgpu::Device mDevice = nullptr;
+  // Device
+  wgpu::SupportedLimits mSupportedLimits;
+  wgpu::Device mDevice = nullptr;
 
-	// Device Error Callback
-	std::unique_ptr<wgpu::ErrorCallback> mErrorCallback;
+  // Device Error Callback
+  std::unique_ptr<wgpu::ErrorCallback> mErrorCallback;
 
-	// Surface
-	wgpu::Surface mSurface = nullptr;
+  // Surface
+  wgpu::Surface mSurface = nullptr;
 
-	// Queue
-	wgpu::Queue mQueue = nullptr;
+  // Queue
+  wgpu::Queue mQueue = nullptr;
 
-	// Swap Chain
-	wgpu::SwapChain mSwapChain = nullptr;
-	wgpu::TextureFormat mSwapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
+  // Swap Chain
+  wgpu::SwapChain mSwapChain = nullptr;
+  wgpu::TextureFormat mSwapChainFormat = wgpu::TextureFormat::BGRA8Unorm;
 
-	// Textures
-	wgpu::Texture mDepthTexture = nullptr;
-	wgpu::TextureView mDepthTextureView = nullptr;
-	wgpu::TextureFormat mDepthTextureFormat = wgpu::TextureFormat::Depth24Plus;
+  // Textures
+  wgpu::Texture mDepthTexture = nullptr;
+  wgpu::TextureView mDepthTextureView = nullptr;
+  wgpu::TextureFormat mDepthTextureFormat = wgpu::TextureFormat::Depth24Plus;
 
-	// Render Pipeline
-	wgpu::ShaderModule mShaderModule = nullptr;
-	wgpu::RenderPipeline mRenderPipeline = nullptr;
-	
-	// Bindings
-	wgpu::BindGroup mBindGroup = nullptr;
-	wgpu::BindGroupLayoutEntry mBindingLayout;
-	wgpu::BindGroupLayout mBindGroupLayout = nullptr;
-	static constexpr int bindGroupLayoutDescEntryCount = 1;
+  // Render Pipeline
+  wgpu::ShaderModule mShaderModule = nullptr;
+  wgpu::RenderPipeline mRenderPipeline = nullptr;
 
-	// Mesh Data
-	std::vector<std::vector<VertexAttributes>> mVertexDatas;
-	std::vector<int> mIndexCounts;
+  // Bindings
+  wgpu::BindGroup mBindGroup = nullptr;
+  wgpu::BindGroupLayoutEntry mBindingLayout;
+  wgpu::BindGroupLayout mBindGroupLayout = nullptr;
+  static constexpr int bindGroupLayoutDescEntryCount = 1;
 
-	// Buffer Data
-	std::vector<wgpu::Buffer> mVertexBuffers;
-	std::vector<int> mUniformIndices;
+  // Mesh Data
+  std::vector<std::vector<VertexAttributes>> mVertexDatas;
+  std::vector<int> mIndexCounts;
 
-	// Uniforms
-	wgpu::Buffer mUniformBuffer = nullptr;
-	Uniform mUniforms;
-	glm::mat4x4 SE3;
-	float mZScalar = 1.0f;
+  // Buffer Data
+  std::vector<wgpu::Buffer> mVertexBuffers;
+  std::vector<int> mUniformIndices;
 
-	// Uniform Vars
-	float angle1;
-	float angle2;
-    glm::mat4x4 S;
-	glm::mat4x4 T1;
-	glm::mat4x4 R1;
+  // Uniforms
+  wgpu::Buffer mUniformBuffer = nullptr;
+  Uniform mUniforms;
+  glm::mat4x4 SE3;
+  float mZScalar = 1.0f;
 
-	//IMGUI variables
-	float imguiScale = 2.0f;
-	int inputBoxSize = 76;
+  // Uniform Vars
+  float angle1;
+  float angle2;
+  glm::mat4x4 S;
+  glm::mat4x4 T1;
+  glm::mat4x4 R1;
 
-	// Quaternion
-	bool isQuaternion = true;
-	double q0 = 1.0;
-	double q1 = 0.0;
-	double q2 = 0.0;
-	double q3 = 0.0;
+  // IMGUI variables
+  float imguiScale = 2.0f;
+  int inputBoxSize = 76;
 
-	// SO3 Matrix
-	bool isSO3 = false;
-	double i00 = 1, i01 = 0, i02 = 0;
-	double i10 = 0, i11 = 1, i12 = 0;
-	double i20 = 0, i21 = 0, i22 = 1;
+  // Quaternion
+  bool isQuaternion = true;
+  double q0 = 1.0;
+  double q1 = 0.0;
+  double q2 = 0.0;
+  double q3 = 0.0;
 
-	// Lie minus operation
-	bool isLieAlgebra = false;
-	
-	// Lie Algebra Operation
-	bool isAdd = false;
-	bool isSub = true;
+  // SO3 Matrix
+  bool isSO3 = false;
+  double i00 = 1, i01 = 0, i02 = 0;
+  double i10 = 0, i11 = 1, i12 = 0;
+  double i20 = 0, i21 = 0, i22 = 1;
 
-	// Left hand side SO3 matrix
-	double l100 = 1, l101 = 0, l102 = 0;
-	double l110 = 0, l111 = 1, l112 = 0;
-	double l120 = 0, l121 = 0, l122 = 1;
+  // Lie minus operation
+  bool isLieAlgebra = false;
 
-	// Right hand side SO3 matrix
-	double r100 = 1, r101 = 0, r102 = 0;
-	double r110 = 0, r111 = 1, r112 = 0;
-	double r120 = 0, r121 = 0, r122 = 1;
-	glm::mat4x4 rotationGLM;
-	
-	// CONSTANTS
-	size_t mUniformStride;
+  // Lie Algebra Operation
+  bool isAdd = false;
+  bool isSub = true;
 
-	// Window sizing
-	static constexpr int WINDOW_WIDTH = 1280;
-	static constexpr int WINDOW_HEIGHT = 720;
+  // Left hand side SO3 matrix
+  double l100 = 1, l101 = 0, l102 = 0;
+  double l110 = 0, l111 = 1, l112 = 0;
+  double l120 = 0, l121 = 0, l122 = 1;
 
-	// Imgui constants
-	static constexpr int IMGUI_DOUBLE_SCALAR = 9;
-	static constexpr int IMGUI_FLOAT_SCALAR = 8;
+  // Right hand side SO3 matrix
+  double r100 = 1, r101 = 0, r102 = 0;
+  double r110 = 0, r111 = 1, r112 = 0;
+  double r120 = 0, r121 = 0, r122 = 1;
+  glm::mat4x4 rotationGLM;
 
-	// Maximum number of uniforms for the meshes
-	static constexpr int MAX_NUM_UNIFORMS = 3;
+  // CONSTANTS
+  size_t mUniformStride;
 
-	// Max mesh buffer size
-	static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
+  // Window sizing
+  static constexpr int WINDOW_WIDTH = 1280;
+  static constexpr int WINDOW_HEIGHT = 720;
 
-	// FPS Limiting Variables
-	//
-	using dsec = std::chrono::duration<double>;
-	static constexpr double FPS_LIMIT = 60.0;
-	static constexpr auto inverseFPS = duration_cast<std::chrono::system_clock::duration>(dsec{1./FPS_LIMIT});
+  // Imgui constants
+  static constexpr int IMGUI_DOUBLE_SCALAR = 9;
+  static constexpr int IMGUI_FLOAT_SCALAR = 8;
 
-	std::chrono::time_point<std::chrono::system_clock> mBeginFrame;
-	std::chrono::time_point<std::chrono::system_clock> mEndFrame;
+  // Maximum number of uniforms for the meshes
+  static constexpr int MAX_NUM_UNIFORMS = 3;
 
-	void initGLFW();
-	void terminateGLFW();
+  // Max mesh buffer size
+  static constexpr int MAX_BUFFER_SIZE = 1000000 * sizeof(VertexAttributes);
 
-	void initAdapterAndDevice();
-	void terminateAapterAndDevice();
+  // FPS Limiting Variables
+  //
+  using dsec = std::chrono::duration<double>;
+  static constexpr double FPS_LIMIT = 60.0;
+  static constexpr auto inverseFPS =
+      duration_cast<std::chrono::system_clock::duration>(dsec{1. / FPS_LIMIT});
 
-	void initQueue();
-	void terminateQueue();
+  std::chrono::time_point<std::chrono::system_clock> mBeginFrame;
+  std::chrono::time_point<std::chrono::system_clock> mEndFrame;
 
-	void initSwapChain();
-	void terminateSwapChain();
+  void initGLFW();
+  void terminateGLFW();
 
-	void initDepthBuffer();
-	void terminateDepthBuffer();
+  void initAdapterAndDevice();
+  void terminateAapterAndDevice();
 
-	void initRenderPipeline();
-	void terminateRenderPipeline();
+  void initQueue();
+  void terminateQueue();
 
-	wgpu::ShaderModule loadShaderModule(const std::filesystem::path& path, wgpu::Device device);
+  void initSwapChain();
+  void terminateSwapChain();
 
-	void loadGeometry(const std::string& url, int uniformID);
-	void initVertexBuffer();
-	void terminateGeometry();
+  void initDepthBuffer();
+  void terminateDepthBuffer();
 
-	void initUniformBuffer();
-	void initUniform(int index, const glm::mat4x4& rotation, float x, float y, float z);
-	void terminateUniforms();
+  void initRenderPipeline();
+  void terminateRenderPipeline();
 
-	void initBindGroup();
-	void terminateBindGroup();
+  wgpu::ShaderModule loadShaderModule(const std::filesystem::path &path,
+                                      wgpu::Device device);
 
-	void initGUI();
-	void terminateGUI();
-	void updateGUI(wgpu::RenderPassEncoder renderPass);
+  void loadGeometry(const std::string &url, int uniformID);
+  void initVertexBuffer();
+  void terminateGeometry();
 
-	void writeRotation();
+  void initUniformBuffer();
+  void initUniform(int index, const glm::mat4x4 &rotation, float x, float y,
+                   float z);
+  void terminateUniforms();
 
-	void adjustView(float x, float y, float z);
+  void initBindGroup();
+  void terminateBindGroup();
+
+  void initGUI();
+  void terminateGUI();
+  void updateGUI(wgpu::RenderPassEncoder renderPass);
+
+  void writeRotation();
+
+  void adjustView(float x, float y, float z);
 
 public:
-	Rendering(); 
+  Rendering();
 
-	~Rendering();
+  ~Rendering();
 
-	bool init();
+  bool init();
 
-	void updateFrame();
+  void updateFrame();
 
-	void terminate();
+  void terminate();
 
-	bool isOpen();
+  bool isOpen();
 };

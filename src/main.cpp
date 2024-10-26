@@ -1,17 +1,16 @@
 #define WEBGPU_CPP_IMPLEMENTATION
 
-#include "Rendering.hpp"
 #include "LieAlgebra.hpp"
+#include "Rendering.hpp"
 #include <iostream>
 
+int main(int, char **) {
+  Rendering viz;
 
-int main(int, char**) {
-	Rendering viz;
+  while (viz.isOpen()) {
+    viz.updateFrame();
+  }
 
-	while (viz.isOpen()) {
-		viz.updateFrame();
-	}
-
-	viz.terminate();
-	return 0;
+  viz.terminate();
+  return 0;
 }
