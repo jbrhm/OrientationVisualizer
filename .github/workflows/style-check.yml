@@ -11,6 +11,9 @@ jobs:
 
     container:  # This should be at the job level
       image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GH_PAT }}
 
     steps:
     - name: Check out the repository
