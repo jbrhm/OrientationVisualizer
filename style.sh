@@ -36,16 +36,21 @@ readonly FOLDERS="./src"
 
 echo "Checking $(ls ${FOLDERS})"
 
-output=$(mktemp)
+output=""
 
+# Run clang-format on all src
 for FOLDER in "${FOLDERS[@]}"; do
-  find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' -exec "${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i {} \; >> $output
+  find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' | while read -r file; do
+	# Run clang-format and capture the output
+	output+=$("${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" "$file")
+  done
 done
+
 # Check if the output is empty
 if [ -s $output ]; then
 	echo "Output is not empty."
-	cat $output  # Print output for debugging or logging
-	exit 1  # Fail the job if necessary
+	echo $output
+	exit 1
 else
 	echo "Output is empty, no style errors"
 fi
