@@ -7,7 +7,7 @@ CLANG_FORMAT_ARGS=("-style=file")
 
 # Just do a dry run if the "fix" argument is not passed
 if [ $# -eq 0 ] || [ "$1" != "--fix" ]; then
-  CLANG_FORMAT_ARGS+=("--dry-run", "--Werror")
+  CLANG_FORMAT_ARGS+=("--dry-run" "--Werror")
 fi
 
 function print_update_error() {
