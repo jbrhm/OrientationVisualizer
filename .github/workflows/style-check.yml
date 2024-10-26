@@ -8,29 +8,13 @@ on:
       - main
 
 jobs:
-  ghcr-container:
+  check-style:
+    name: Run Style Checker
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
+    container:
+      image: jbrhm/orientation-viz-style-check-ghcr:latest
+      volumes:
+        - my-app:/app
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v1
-
-      - name: Login to GHCR
-        env:
-          GHCR_TOKEN: ${{ secrets.GH_PAT }}
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ env.GHCR_TOKEN }}
-
-      - name: Pull container image
-        uses: docker/pull-action@v1
-        with:
-          image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
-
-      - name: Run container
-        uses: docker/run-action@v1
-        with:
-          image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
+      - name: Run Style Checker
+        run: ./style.sh
