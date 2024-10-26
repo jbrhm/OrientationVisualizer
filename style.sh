@@ -36,7 +36,17 @@ readonly FOLDERS="./src"
 
 echo "Checking $(ls ${FOLDERS})"
 
+output=$(mktemp)
+
 for FOLDER in "${FOLDERS[@]}"; do
-  find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' -exec "${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i {} \;
+  find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' -exec "${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i {} \; >> $output
 done
+# Check if the output is empty
+if [ -s $output ]; then
+	echo "Output is not empty."
+	cat $output  # Print output for debugging or logging
+	exit 1  # Fail the job if necessary
+else
+	echo "Output is empty, no style errors"
+fi
 echo "Done"
