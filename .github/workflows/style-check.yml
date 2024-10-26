@@ -15,7 +15,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GH_PAT }}
       volumes:
-        - my-app:/app
+        - src:/app/src
 
     steps:
     - name: Run Style Checker
