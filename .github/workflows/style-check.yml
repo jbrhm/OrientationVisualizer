@@ -21,7 +21,7 @@ jobs:
     steps:
     - name: Check Out Repo
       uses: actions/checkout@v2
-    - name: Copy Style Checker
-      run: mv /work/style.sh /app
+    - name: Copy Style Checker and Files
+      run: mv /work/style.sh /app && mv /work/src/* /app/src
     - name: Run Style Checker
       run: cd /app && sudo -v && ./style.sh
