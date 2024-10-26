@@ -6,7 +6,7 @@ sudo -v
 
 git clone https://github.com/jbrhm/OrientationVisualizer.git
 
-cd ~/OrientationVisualizer
+cd OrientationVisualizer
 
 ./ansible/ansible.sh ./ansible/dev.yml
 

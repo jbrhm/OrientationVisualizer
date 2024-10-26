@@ -1,13 +1,19 @@
 FROM ubuntu:latest
 
-RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+# Set the user ID and group ID
+ARG UID=1069
+ARG GID=1000
+ARG DOCKER_USER="docker"
 
-USER docker
+RUN apt-get update
 
-RUN apt update
-RUN apt -y install sudo
+RUN apt-get -y install sudo
+
 RUN sudo apt -y install git ansible wget
+
+RUN pwd
+RUN ls
+
 RUN wget -O bootstrap.sh https://raw.githubusercontent.com/jbrhm/OrientationVisualizer/refs/heads/main/scripts/bootstrap.sh && chmod +x ./bootstrap.sh && ./bootstrap.sh
-RUN cd OrientationVisualizer
 
 CMD Viz
