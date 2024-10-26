@@ -16,10 +16,12 @@ jobs:
         password: ${{ secrets.GH_PAT }}
       volumes:
         - ${{ github.workspace }}/src:/app/src
-        - ${{ github.workspace }}/style.sh:/app/style.sh
+        - ${{ github.workspace }}:/work
 
     steps:
     - name: Check Out Repo
       uses: actions/checkout@v2
+    - name: Copy Style Checker
+      run: mv /work/style.sh /app
     - name: Run Style Checker
-      run: cd /app && sudo -v && sudo ./style.sh
+      run: cd /app && sudo -v && ./style.sh
