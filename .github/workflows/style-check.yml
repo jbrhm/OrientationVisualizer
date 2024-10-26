@@ -15,10 +15,14 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GH_PAT }}
       volumes:
-        - ${{ github.workspace }}/src/*:/app/src
-
+        - name: workspace
+          path: /mnt/workspace
     steps:
     - name: Check Out Repo
       uses: actions/checkout@v2
+    - name: Copy subfolder to mounted volume
+      run: |
+        mkdir -p /mnt/workspace/src
+        cp -r ${{ github.workspace }}/src/* /mnt/workspace/src/
     - name: Run Style Checker
-      run: cd /app && ./style.sh
+      run: cd /mnt/workspace && ./style.sh
