@@ -19,6 +19,6 @@ jobs:
 
     steps:
     - name: Change Directories
-      run: cd /app
+      run: cd /app/src
     - name: Run Style Checker
       run: ls
