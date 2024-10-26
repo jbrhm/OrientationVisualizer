@@ -14,7 +14,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v1
 
       - name: Login to GHCR
         env:
@@ -26,11 +26,11 @@ jobs:
           password: ${{ env.GHCR_TOKEN }}
 
       - name: Pull container image
-        uses: docker/pull-action@v4
+        uses: docker/pull-action@v1
         with:
           image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
 
       - name: Run container
-        uses: docker/run-action@v4
+        uses: docker/run-action@v1
         with:
           image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
