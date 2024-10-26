@@ -1,16 +1,12 @@
-set -Eeuo pipefail
+#!/usr/bin/env bash
 
 readonly RED='\033[0;31m'
 readonly NC='\033[0m'
 
-CLANG_FORMAT_ARGS=(
-  "-style=file"
-)
+CLANG_FORMAT_ARGS=("-style=file")
 
 # Just do a dry run if the "fix" argument is not passed
 if [ $# -eq 0 ] || [ "$1" != "--fix" ]; then
-  BLACK_ARGS+=("--diff") # Show difference
-  BLACK_ARGS+=("--check") # Exit with non-zero code if changes are required (for CI)
   CLANG_FORMAT_ARGS+=("--dry-run")
 fi
 
@@ -36,9 +32,8 @@ readonly CLANG_FORMAT_PATH=$(find_executable clang-format)
 ## Run checks
 
 echo "Style checking C++ ..."
-readonly FOLDERS=(
-  ./src
-)
+readonly FOLDERS="./src"
+
 for FOLDER in "${FOLDERS[@]}"; do
   find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' -exec "${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i {} \;
 done

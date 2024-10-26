@@ -11,9 +11,9 @@ jobs:
     name: Runs Style Checker
     runs-on: ubuntu-latest
     container:
-      image: composer:latest
+      image: jbrhm/orientation-viz-style-check-ghcr:latest
       volumes:
         - my-app:/app
     steps:
-      - name: Running Composer Install
-        run: composer install
+      - name: Run Style Checker
+        run: ./style.sh
