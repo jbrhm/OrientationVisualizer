@@ -36,20 +36,30 @@ readonly FOLDERS="./src"
 
 echo "Checking $(ls ${FOLDERS})"
 
-output=""
+char_count_variable=0
 
 # Run clang-format on all src
+readonly TMP_ERROR="/tmp/err_out.txt"
+mkdir -p /tmp
+touch $TMP_ERROR 
+
 for FOLDER in "${FOLDERS[@]}"; do
   find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' | while read -r file; do
 	# Run clang-format and capture the output
-	output+=$("${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" "$file")
+	"${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i "$file"
+	"${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i "$file" 2>> $TMP_ERROR
   done
 done
 
+# HELPFUL FOR DEBUG
+char_count_variable=$(cat $TMP_ERROR | wc -m)
+#echo $char_count_variable
+
+rm $TMP_ERROR
+
 # Check if the output is empty
-if [ -s $output ]; then
+if [[ "$char_count_variable" -gt 1 ]]; then
 	echo "Output is not empty."
-	echo $output
 	exit 1
 else
 	echo "Output is empty, no style errors"
