@@ -18,5 +18,7 @@ jobs:
         - my-app:/app
 
     steps:
+    - name: Change Directories
+      run: cd /app
     - name: Run Style Checker
       run: /app/style.sh
