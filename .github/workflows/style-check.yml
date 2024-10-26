@@ -15,8 +15,10 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GH_PAT }}
       volumes:
-        - src:/app/src
+        - ${{ github.workspace }}:/app/src
 
     steps:
+    - name: Check Out Repo
+      uses: actions/checkout@v2
     - name: Run Style Checker
       run: cd /app && ./style.sh
