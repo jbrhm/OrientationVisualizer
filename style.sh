@@ -34,6 +34,8 @@ readonly CLANG_FORMAT_PATH=$(find_executable clang-format)
 echo "Style checking C++ ..."
 readonly FOLDERS="./src"
 
+echo "Checking $(ls ${FOLDERS})"
+
 for FOLDER in "${FOLDERS[@]}"; do
   find "${FOLDER}" -regex '.*\.\(cpp\|hpp\|h\)' -exec "${CLANG_FORMAT_PATH}" "${CLANG_FORMAT_ARGS[@]}" -i {} \;
 done
