@@ -9,9 +9,7 @@ private:
 
   // This is to prevent floating point errors
   static bool equals(double val1, double val2) {
-    return 
-		abs(
-				val1 - val2) < tolerance;
+    return abs(val1 - val2) < tolerance;
   }
 
   static double trace(const Eigen::Matrix3d &mat) {
