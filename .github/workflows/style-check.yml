@@ -16,6 +16,7 @@ jobs:
         password: ${{ secrets.GH_PAT }}
       volumes:
         - ${{ github.workspace }}/src:/app/src
+        - ${{ github.workspace }}/style.sh:/app/style.sh
 
     steps:
     - name: Check Out Repo
