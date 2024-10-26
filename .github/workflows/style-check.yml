@@ -19,4 +19,4 @@ jobs:
 
     steps:
     - name: Run Style Checker
-      run: ./style.sh
+      run: /app/style.sh
