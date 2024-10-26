@@ -11,7 +11,7 @@ jobs:
     name: Runs Style Checker
     runs-on: ubuntu-latest
     container:
-      image: jbrhm/orientation-viz-style-check-ghcr:latest
+      image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
       volumes:
         - my-app:/app
     steps:
