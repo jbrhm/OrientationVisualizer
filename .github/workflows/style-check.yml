@@ -6,14 +6,31 @@ on:
   push:
     branches:
       - main
+
 jobs:
-  run-style-checker:
-    name: Runs Style Checker
+  ghcr-container:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
-      volumes:
-        - my-app:/app
+    permissions:
+      packages: write
     steps:
-      - name: Run Style Checker
-        run: ./style.sh
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GH_PAT }}
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ env.GHCR_TOKEN }}
+
+      - name: Pull container image
+        uses: docker/pull-action@v4
+        with:
+          image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
+
+      - name: Run container
+        uses: docker/run-action@v4
+        with:
+          image: ghcr.io/jbrhm/orientation-viz-style-check-ghcr:latest
